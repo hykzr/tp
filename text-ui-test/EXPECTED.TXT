@@ -1,9 +1,11 @@
-Hello from
- ____        _        
-|  _ \ _   _| | _____ 
-| | | | | | | |/ / _ \
-| |_| | |_| |   <  __/
-|____/ \__,_|_|\_\___|
+____________________________________________________________
 
-What is your name?
-Hello James Gosling
+ Hello! I'm InternTrack
+ What can I do for you?
+____________________________________________________________
+
+____________________________________________________________
+Got it. I've added this application:
+  Shopee - Backend Intern (Deadline: 2023-11-30, Contact: Johns, Status: Pending)
+Now you have 1 applications in the list.
+____________________________________________________________
