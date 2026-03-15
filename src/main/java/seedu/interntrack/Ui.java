@@ -77,6 +77,12 @@ public class Ui {
             String roles = app.getRole();
             String company = app.getCompany();
             String status = app.getStatus();
+            assert app.getCompany() != null && !app.getCompany().isEmpty() :
+                    "Existing application must have company";
+            assert app.getRole() != null && !app.getRole().isEmpty() :
+                    "Existing application must have role";
+            assert app.getStatus() != null:
+                    "Existing application must have status";
             String deadline = (app.getDeadline() != null) ? " Apply by " + app.getDeadline().toString() + "." : "";
             String contact = (app.getContact() != null) ? " Contact with " + app.getContact() + "." : "";
             System.out.println((i + 1) + ". " + roles + " at " + company + " is " + status + "." + deadline + contact);
