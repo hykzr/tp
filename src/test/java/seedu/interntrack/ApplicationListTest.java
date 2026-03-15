@@ -119,4 +119,18 @@ public class ApplicationListTest {
 
         assertEquals("Application index is out of range.", exception.getMessage());
     }
+
+    @Test
+    public void filterApplicationsByStatus_matchingStatus_returnsFilteredList() throws InternTrackException {
+        ArrayList<Application> testList = new ArrayList<>();
+        ApplicationList.addApplications(testList, "c/Google r/Intern");
+        ApplicationList.addApplications(testList, "c/NUS r/TA");
+        ApplicationList.editApplicationStatus(testList, 2, "Applied");
+
+        ArrayList<Application> filteredApplications =
+                ApplicationList.filterApplicationsByStatus(testList, "applied");
+
+        assertEquals(1, filteredApplications.size());
+        assertEquals("Applied", filteredApplications.get(0).getStatus());
+    }
 }
