@@ -66,7 +66,7 @@ public class Storage {
         if (!parts[2].equals(NULL_STRING) && !parts[2].isEmpty()) {
             deadline = LocalDate.parse(parts[2]);
         }
-        String contact = parts[3];
+        String contact = (parts[3].equals(NULL_STRING)) ? null : parts[3];
         String status = parts[4];
         Application app = new Application(company, role, deadline, contact);
         // Preserve the stored status instead of always defaulting to "Pending"
