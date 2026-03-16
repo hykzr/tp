@@ -139,4 +139,30 @@ public class Parser {
 
         return status;
     }
+    /**
+     * Parses the application index from a delete command.
+     *
+     * @param input The raw user input string.
+     * @return The parsed 0-based index.
+     * @throws InternTrackException If the index is missing or invalid.
+     */
+    public static int parseDeleteIndex(String input) throws InternTrackException {
+        String[] parts = input.trim().split("\\s+", 2);
+
+        if (parts.length < 2) {
+            throw new InternTrackException("Use format: delete INDEX");
+        }
+
+        try {
+            int index = Integer.parseInt(parts[1]);
+            if (index <= 0) {
+                throw new InternTrackException("Application index must be greater than 0.");
+            }
+            return index - 1; // convert to 0-based index
+        } catch (NumberFormatException e) {
+            throw new InternTrackException("Application index must be a valid number.");
+        }
+    }
 }
+
+

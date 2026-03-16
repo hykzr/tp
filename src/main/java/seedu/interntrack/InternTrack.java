@@ -13,6 +13,7 @@ public class InternTrack {
     private static final String EDIT_COMMAND = "edit";
     private static final String FILTER_COMMAND = "filter";
     private static final String LIST_COMMAND = "list";
+    private static final String DELETE_COMMAND = "delete";
     private static final Logger logger = Logger.getLogger("InternTrack");
 
     /**
@@ -47,17 +48,21 @@ public class InternTrack {
         try {
             if (line.startsWith(ADD_COMMAND)) {
                 logger.log(Level.INFO, "Processing ADD command");
-                assert line.contains(ADD_COMMAND)
-                        : "Logic error: handleCommand reached 'add' block without 'add' in string";
+
                 int sizeBefore = userApplications.size();
                 Application newApplication = ApplicationList.addApplications(userApplications, line);
-                assert userApplications.size() == sizeBefore + 1 : "List size should increment after a successful add";
+
+                assert userApplications.size() == sizeBefore + 1 :
+                        "List size should increment after a successful add";
+
                 logger.log(Level.INFO, "Successfully added application: "
                         + newApplication.getCompany() + " - " + newApplication.getRole());
                 Ui.printAddApplication(newApplication, userApplications);
                 Storage.saveApplications(userApplications);
             } else if (line.startsWith(EDIT_COMMAND)) {
                 handleEditCommand(line, userApplications);
+            } else if (line.startsWith(DELETE_COMMAND)) {
+                handleDeleteCommand(line, userApplications);
             } else if (line.startsWith(FILTER_COMMAND)) {
                 handleFilterCommand(line, userApplications);
             } else if (line.startsWith(LIST_COMMAND)) {
@@ -73,11 +78,32 @@ public class InternTrack {
     }
 
     /**
-     * Handles the list command by listing all applications.
+     * Handles the delete command by removing an application.
      *
      * @param line             The raw command string entered by the user.
      * @param userApplications The current list of applications.
-     * @throws InternTrackException If the command format or index is invalid.
+     */
+    private static void handleDeleteCommand(String line, ArrayList<Application> userApplications)
+            throws InternTrackException {
+
+        int index = Parser.parseDeleteIndex(line);
+
+        if (index < 0 || index >= userApplications.size()) {
+            throw new InternTrackException("Invalid application index.");
+        }
+
+        Application removedApplication = userApplications.remove(index);
+
+        logger.log(Level.INFO, "Deleted application: "
+                + removedApplication.getCompany() + " - " + removedApplication.getRole());
+
+        Ui.printDeleteApplication(removedApplication, index);
+
+        Storage.saveApplications(userApplications);
+    }
+
+    /**
+     * Handles the list command by listing all applications.
      */
     private static void handleListCommand(String line, ArrayList<Application> userApplications)
             throws InternTrackException {
@@ -86,10 +112,6 @@ public class InternTrack {
 
     /**
      * Handles the edit command by updating an application's status.
-     *
-     * @param line             The raw command string entered by the user.
-     * @param userApplications The current list of applications.
-     * @throws InternTrackException If the command format or index is invalid.
      */
     private static void handleEditCommand(String line, ArrayList<Application> userApplications)
             throws InternTrackException {
@@ -102,10 +124,6 @@ public class InternTrack {
 
     /**
      * Handles the filter command by listing applications that match the status.
-     *
-     * @param line             The raw command string entered by the user.
-     * @param userApplications The current list of applications.
-     * @throws InternTrackException If the command format is invalid.
      */
     private static void handleFilterCommand(String line, ArrayList<Application> userApplications)
             throws InternTrackException {

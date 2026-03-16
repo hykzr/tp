@@ -135,6 +135,17 @@ public class Ui {
     }
 
     /**
+     * Prints confirmation after deleting an application.
+     *
+     * @param application The removed application.
+     * @param index       The index of the removed application.
+     */
+    public static void printDeleteApplication(Application application, int index) {
+        System.out.println("Noted. I've removed this application:");
+        System.out.println("  " + (index + 1) + ". " + application.toString());
+    }
+
+    /**
      * Prints an error message when an unrecognised command is entered.
      */
     public static void printUnknownCommand() {
