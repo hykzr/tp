@@ -36,9 +36,24 @@ Examples:
 * `add c/Shopee r/Backend Intern d/2023-11-30 ct/Johns`
     * Adds an application with a specific deadline and through Johns.
 
+### 3.2. Filter applications by status: `filter`
+
+Filters applications by their status and lists them.
+
+Format: `filter s/STATUS`
+
+* s/STATUS: The status to filter by (case-insensitive).
+
+Examples:
+* `filter s/Pending`
+    * Lists all applications with status "Pending".
+* `filter s/Rejected`
+    * Lists all applications with status "Rejected".
+
 ## FAQ
 
 
 ## Command Summary
 
 * Add internship application: `add c/COMPANY r/ROLE [d/DEADLINE] [ct/CONTACT]`
+* Filter applications by status: `filter s/STATUS`
