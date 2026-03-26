@@ -46,24 +46,34 @@ public class InternTrack {
      *
      * @param line             The raw command string entered by the user.
      * @param userApplications The current list of applications.
+     * @param undoHistory The stack storing previous application list states for undo.
      */
     private static void handleCommand(String line, ArrayList<Application> userApplications,
                                       Stack<ArrayList<Application>> undoHistory) {
+        String trimmedLine = line.trim();
+
+        if (trimmedLine.isEmpty()) {
+            return;
+        }
+
+        String[] parts = trimmedLine.split("\\s+", 2);
+        String command = parts[0];
+
         try {
-            if (line.startsWith(ADD_COMMAND)) {
-                handleAddCommand(line, userApplications, undoHistory);
-            } else if (line.startsWith(EDIT_COMMAND)) {
-                handleEditCommand(line, userApplications, undoHistory);
-            } else if (line.startsWith(DELETE_COMMAND)) {
-                handleDeleteCommand(line, userApplications, undoHistory);
-            } else if (line.startsWith(UNDO_COMMAND)) {
+            if (command.equals(ADD_COMMAND)) {
+                handleAddCommand(trimmedLine, userApplications, undoHistory);
+            } else if (command.equals(EDIT_COMMAND)) {
+                handleEditCommand(trimmedLine, userApplications, undoHistory);
+            } else if (command.equals(DELETE_COMMAND)) {
+                handleDeleteCommand(trimmedLine, userApplications, undoHistory);
+            } else if (command.equals(UNDO_COMMAND)) {
                 handleUndoCommand(userApplications, undoHistory);
-            } else if (line.startsWith(FILTER_COMMAND)) {
-                handleFilterCommand(line, userApplications);
-            } else if (line.startsWith(LIST_COMMAND)) {
+            } else if (command.equals(FILTER_COMMAND)) {
+                handleFilterCommand(trimmedLine, userApplications);
+            } else if (command.equals(LIST_COMMAND)) {
                 handleListCommand(userApplications);
-            } else if (line.startsWith(SORT_COMMAND)) {
-                handleSortCommand(line, userApplications);
+            } else if (command.equals(SORT_COMMAND)) {
+                handleSortCommand(trimmedLine, userApplications);
             } else {
                 logger.log(Level.WARNING, "Unknown command received: " + line);
                 Ui.printUnknownCommand();
@@ -127,7 +137,7 @@ public class InternTrack {
     /**
      * Handles the list command by listing all applications.
      */
-    private static void handleListCommand( ArrayList<Application> userApplications)
+    private static void handleListCommand(ArrayList<Application> userApplications)
             throws InternTrackException {
         Ui.printAllApplications(userApplications);
         logger.info("Showing all current applications");
@@ -180,8 +190,8 @@ public class InternTrack {
             throws InternTrackException {
         String[] criteria = Parser.parseSortCriteria(line);
 
-        assert criteria.length > 0: "There must be some sorting criteria";
-        assert criteria.length < 4: "There are at most 3 criteria";
+        assert criteria.length > 0 : "There must be some sorting criteria";
+        assert criteria.length < 4 : "There are at most 3 criteria";
         ArrayList<Application> sortedApps = ApplicationList.sortApplicationsByCriteria(userApplications, criteria);
         Ui.printSortedApplications(sortedApps, criteria);
     }
