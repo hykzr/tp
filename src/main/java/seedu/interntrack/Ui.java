@@ -1,5 +1,6 @@
 package seedu.interntrack;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -202,5 +203,28 @@ public class Ui {
      */
     public static void printUnknownCommand() {
         System.out.println(UNKNOWN_COMMAND_MESSAGE);
+    }
+
+    /**
+     * Prints applications with upcoming deadlines within the specified number of days.
+     *
+     * @param upcomingApplications The list of applications with upcoming deadlines.
+     * @param numDays The number of days used for the deadline filter.
+     * @param remindDate The specific cutoff date for the reminder.
+     */
+    public static void printUpcomingDeadlines(ArrayList<Application> upcomingApplications, int numDays, LocalDate remindDate) {
+        if (upcomingApplications.isEmpty()) {
+            System.out.println("No applications due in the next " + numDays + " days.");
+            return;
+        }
+        int applicationCount = upcomingApplications.size();
+        System.out.println("You have " + applicationCount
+                + ((applicationCount > 1) ? " applications" : " application")
+                + " due in the next " + numDays + " days"
+                + " (up to " + remindDate.toString() + "):");
+        for (int i = 0; i < applicationCount; i++) {
+            Application app = upcomingApplications.get(i);
+            printApplication(app, i);
+        }
     }
 }

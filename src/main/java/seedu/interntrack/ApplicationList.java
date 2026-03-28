@@ -86,6 +86,29 @@ public class ApplicationList {
                 + ". Matches: " + filteredApplications.size());
         return filteredApplications;
     }
+    /**
+     * Filters applications that have a deadline on or before the specified date.
+     * Iterates through the provided list and collects applications where the
+     * deadline is not after the given date.
+     *
+     * @param userApplications The list of applications to filter.
+     * @param deadline The cutoff date for the filter.
+     * @return A list of applications matching the date criteria.
+     */
+    public static ArrayList<Application> filterApplicationsOnOrBefore(ArrayList<Application> userApplications,
+                                                                    LocalDate deadline) {
+        ArrayList<Application> filteredApplications = new ArrayList<>();
+        for (Application application : userApplications) {
+            LocalDate applicationDeadline = application.getDeadline();
+            if (applicationDeadline != null && !applicationDeadline.isAfter(deadline)){
+                filteredApplications.add(application);
+            }
+        }
+        logger.log(Level.INFO, "Filtered applications on or before deadline=" + deadline
+                + ". Matches: " + filteredApplications.size());
+        return filteredApplications;
+    }
+
 
     /**
      * Sort applications by criteria.
