@@ -1,6 +1,68 @@
-# Design & Implementation
+# Developer Guide
 
-## Architecture
+## Table of Contents
+
+1. [Acknowledgements](#acknowledgements)
+2. [Setting up, getting started](#setting-up-getting-started)
+3. [Design](#design)
+   - [Architecture](#architecture)
+   - [Ui component](#ui-component)
+   - [Storage component](#storage-component)
+   - [Parser component](#parser-component)
+   - [Application component](#application-component)
+   - [Application List component](#application-list-component)
+   - [FilterCriteria component](#filtercriteria-component)
+   - [EditDetails component](#editdetails-component)
+4. [Implementation](#implementation)
+   - [Add feature](#add-feature)
+   - [List feature](#list-feature)
+   - [Edit feature](#edit-feature)
+   - [Filter feature](#filter-feature)
+   - [Remind feature](#remind-feature)
+   - [Delete feature](#delete-feature)
+   - [Sort feature](#sort-feature)
+   - [Undo feature](#undo-feature)
+   - [Summary feature](#summary-feature)
+5. [Documentation, logging, testing, configuration, dev-ops](#documentation-logging-testing-configuration-dev-ops)
+6. [Appendix: Requirements](#appendix-requirements)
+   - [Product scope](#product-scope)
+   - [User stories](#user-stories)
+   - [Use cases](#use-cases)
+   - [Non-Functional Requirements](#non-functional-requirements)
+   - [Glossary](#glossary)
+7. [Appendix: Instructions for manual testing](#appendix-instructions-for-manual-testing)
+   - [Launch and shutdown](#launch-and-shutdown)
+   - [Deleting an application](#deleting-an-application)
+   - [Saving data](#saving-data)
+
+---
+
+## Acknowledgements
+
+This project was developed as part of the CS2113 Team Project at the National University of Singapore.
+
+The project structure and development workflow follow the guidelines from the SE-EDU project template:
+https://se-education.org/
+
+The project focuses on the learning of Object-Oriented Programming (OOP) principles and good coding practices for
+collaborative software development in a team environment.
+
+The project was developed using Java and standard software engineering tools such as Git for version control and GitHub
+for project management and collaboration.
+
+Java standard libraries such as `java.util`, `java.io`, and `java.time` were used in the implementation.
+
+---
+
+## Setting up, getting started
+
+{Provide step-by-step instructions for setting up the development environment and getting started with the project.}
+
+---
+
+## Design
+
+### Architecture
 
 The architecture of InternTrack follows a layered design pattern with the following main components:
 
@@ -12,6 +74,170 @@ The architecture of InternTrack follows a layered design pattern with the follow
 The sequence of interaction follows a clear flow: User input → UI → Logic (Parser) → Model manipulation → Storage persistence.
 
 ---
+
+### Ui component
+
+{Description of Ui component will be added here.}
+
+---
+
+### Storage component
+
+#### Overview
+
+The `Storage` component is responsible for persisting application data to disk and loading it back into memory during startup. This component bridges the gap between the in-memory model and the file system, ensuring data durability and consistency.
+
+#### Design Considerations
+
+##### Aspect 2: When to Persist Data to Storage
+
+**Alternative 1 (Current Choice):** Auto-save to `Storage` immediately after every successful command that modifies the model (add, edit, delete).
+
+*Pros:*
+- Prevents data loss if the application crashes or is forcefully terminated
+- Guarantees consistency between the in-memory model and on-disk state
+- Simplifies error handling: if the save fails, the entire operation can be considered incomplete and rolled back
+- Users never lose work; changes are persisted immediately
+
+*Cons:*
+- Increased disk I/O operations may cause slight performance overhead
+- Inefficient for batch operations (multiple adds followed by a save would write to disk multiple times)
+- Disk write latency could delay user feedback
+
+**Alternative 2:** Only save to `Storage` when the user issues an explicit `save` command or when the application exits normally.
+
+*Pros:*
+- Better performance: disk writes are minimized and can be batched
+- More predictable timing—saves only happen at user-defined points
+- Aligns with traditional desktop application workflows (e.g., spreadsheets require explicit saves)
+
+*Cons:*
+- **High risk of data loss** if the application is force-closed without an explicit save
+- User must remember to save, placing responsibility on the user
+- No guarantee of data consistency throughout a session
+- Less suitable for tasks that users perform casually or repetitively
+
+**Rationale for Current Choice:** For an internship application tracker, data loss is unacceptable. Immediate persistence ensures that every application a user enters is permanently saved. While this incurs a small performance cost, the safety guarantee is worth the trade-off given the application's domain.
+
+---
+
+##### Aspect 3: File Format for Persistent Storage
+
+**Alternative 1 (Current Choice):** Store applications in a plain-text file using a pipe-delimiter (`|`) format.
+
+*Pros:*
+- Human-readable and easily debuggable—users can directly examine and understand the file contents
+- No external library dependencies required
+- Simple parsing and serialization logic
+- Fast I/O performance for small to medium datasets
+- Minimal file size overhead compared to structured formats
+
+*Cons:*
+- Not scalable if nested or complex data structures are added later
+- If the delimiter character (`|`) appears in data fields, it must be escaped, complicating both serialization and deserialization
+- Limited support for special characters; encoding issues may arise
+- Fragile: manual edits to the file can easily corrupt the data format
+
+**Alternative 2:** Store applications in JSON format.
+
+*Pros:*
+- Structured, widely supported format with standardized specifications
+- Self-documenting: field names are included in the serialized data
+- Easy to extend with new fields without breaking existing parsers
+- Better handling of special characters, escape sequences, and nested objects
+- Widely available libraries simplify parsing and serialization
+
+*Cons:*
+- Requires an external JSON library dependency (e.g., `gson`, `jackson`)
+- Slightly slower parsing and serialization compared to plain text
+- Larger file size due to formatting overhead and field name repetition
+- Overkill for a simple, flat data structure like applications
+
+**Alternative 3:** Use a database.
+
+*Pros:*
+- Supports complex queries, indexing, and relationships between entities
+- Built-in data validation and type constraints
+- Superior performance for large datasets (thousands of records)
+- Allows for concurrent access and advanced features like transactions
+
+*Cons:*
+- Adds significant complexity and database library dependencies
+- Overkill for a CLI application managing a small number of applications
+- Harder to understand and debug compared to file-based approaches
+- Requires knowledge of SQL and database administration
+- Heavier resource footprint
+
+**Rationale for Current Choice:** The plain-text pipe-delimited format is appropriate for an early-stage student project. It provides a good balance between simplicity, readability, and performance. If future requirements demand support for complex nested data or significantly larger datasets, migrating to JSON or a database would be straightforward.
+
+---
+
+### Parser component
+
+#### Overview
+
+The `Parser` component is responsible for interpreting user input and converting it into actionable commands. It validates user input and constructs domain objects (like `Application` instances) that represent the user's intentions.
+
+#### Design Considerations
+
+##### Aspect 1: Where the Application Object is Instantiated
+
+**Alternative 1 (Current Choice):** Instantiate the complete `Application` object inside the `Parser.createApplication()` method, which is called by `ApplicationList.addApplications()`.
+
+*Pros:*
+- Parsing logic is centralized and reusable across commands
+- `ApplicationList` is insulated from parsing concerns; it only knows about domain objects
+- Clear separation of concerns between input parsing and model management
+- Validation happens at a single point, reducing the risk of inconsistency
+
+*Cons:*
+- Parser is tightly coupled to the `Application` class structure
+- Changes to the `Application` constructor signature require updating the parser
+- If multiple ways to create `Application` objects are needed, code duplication may occur
+
+**Alternative 2:** Pass raw, validated strings directly to `ApplicationList.addApplications()` and allow it to instantiate the `Application` object during the add operation.
+
+*Pros:*
+- Reduces coupling between the parser and the `Application` model
+- `ApplicationList` has more control and flexibility over object instantiation
+- Easier to support alternative `Application` creation paths
+
+*Cons:*
+- Violates the Single Responsibility Principle by mixing input parsing with model logic
+- Duplicates validation logic if applications are created in multiple places
+- Makes testing harder because the model layer must now understand input syntax
+- Reduced code reusability across commands that need to create applications
+
+**Rationale for Current Choice:** Centralizing instantiation in the parser improves testability and maintainability. Each component has a clear responsibility: the parser handles user input syntax, and the model layer handles data integrity.
+
+---
+
+### Application component
+
+{Description of Application component will be added here.}
+
+---
+
+### Application List component
+
+{Description of Application List component will be added here.}
+
+---
+
+### FilterCriteria component
+
+{Description of FilterCriteria component will be added here.}
+
+---
+
+### EditDetails component
+
+{Description of EditDetails component will be added here.}
+
+---
+
+## Implementation
+
 
 ## Application Initialization: Loading Persisted Data
 
@@ -35,7 +261,9 @@ By the time the user sees the welcome prompt, all previously saved applications 
 
 ---
 
-## Implementation of Add Feature
+### Add feature
+
+#### Proposed Implementation
 
 The add command follows a 5-step pipeline:
 
@@ -47,12 +275,11 @@ The add command follows a 5-step pipeline:
 
 ---
 
-## Detailed Walkthrough of Add Command
+#### Detailed Walkthrough of Add Command
 
-### Step 1: Parsing User Input
+##### Step 1: Parsing User Input
 
-When a user enters
-`add c/Google r/Software Engineer d/2024-03-31 ct/John Doe`,
+When a user enters `add c/Google r/Software Engineer d/2024-03-31 ct/John Doe`,
 the input is received by `Ui.readCommand()` and passed to `InternTrack.handleCommand()`.
 
 This method inspects the command prefix and dispatches to `handleAddCommand()`.
@@ -67,7 +294,7 @@ The `Parser.createApplication()` method processes the raw input string:
 
 ---
 
-### Step 2: Object Creation and Default Initialization
+##### Step 2: Object Creation and Default Initialization
 
 Once parsing is successful, `Parser.createApplication()` instantiates a new `Application` object with the extracted data.
 
@@ -75,7 +302,7 @@ Critically, the `Application` constructor automatically assigns a default status
 
 ---
 
-### Step 3: Model Update
+##### Step 3: Model Update
 
 The newly created `Application` object is returned to `ApplicationList.addApplications()`, which performs final validation:
 
@@ -84,7 +311,7 @@ The newly created `Application` object is returned to `ApplicationList.addApplic
 
 ---
 
-### Step 4: Storage Persistence
+##### Step 4: Storage Persistence
 
 Immediately after the successful model update, `InternTrack.handleAddCommand()` calls `Storage.saveApplications(userApplications)` to persist the updated list to disk.
 
@@ -101,19 +328,26 @@ The `Storage.saveApplications()` method:
 
 ---
 
-### Step 5: User Feedback
+##### Step 5: User Feedback
 
 Finally, `Ui.printAddApplication()` displays a confirmation message showing the added application details and the updated total count.
 
 ---
 
-### Sequence Diagram illustrating the 5 steps above
+##### Sequence Diagram illustrating the 5 steps above
 
 ![add\_sequence\_diag.png](diagrams/add_sequence_diag.png)
 
 ---
 
-## Implementation of Edit Feature
+
+### List feature
+
+{Description of List feature implementation will be added here.}
+
+---
+
+### Edit feature
 
 The `edit` command allows users to modify the status of an existing application.
 
@@ -130,7 +364,7 @@ Implementation steps:
 1. `Parser.parseEditCommand()` extracts the index and new status.
 2. The index is validated to ensure it exists in the application list.
 3. `ApplicationList.editApplicationStatus()` retrieves the application.
-4. The application’s `setStatus()` method updates the status value.
+4. The application's `setStatus()` method updates the status value.
 5. `Storage.saveApplications()` persists the updated list.
 6. `Ui.printEditSuccess()` displays confirmation to the user.
 
@@ -140,13 +374,37 @@ This approach keeps validation within the model while command interpretation rem
 
 ---
 
-### Sequence Diagram: Edit Command
+##### Sequence Diagram: Edit Command
 
 ![edit\_sequence\_diag.png](diagrams/edit_sequence_diag.png)
 
 ---
 
-## Implementation of Undo Feature
+### Filter feature
+
+{Description of Filter feature implementation will be added here.}
+
+---
+
+### Remind feature
+
+{Description of Remind feature implementation will be added here.}
+
+---
+
+### Delete feature
+
+{Description of Delete feature implementation will be added here.}
+
+---
+
+### Sort feature
+
+{Description of Sort feature implementation will be added here.}
+
+---
+
+### Undo feature
 
 The `undo` command allows users to revert the most recent modification made to the application list.
 
@@ -160,7 +418,7 @@ Undo is implemented using a snapshot-based state restoration mechanism.
 
 ---
 
-### Snapshot Mechanism
+#### Snapshot Mechanism
 
 Before executing any modifying command:
 
@@ -177,7 +435,7 @@ This guarantees the system returns to the exact state before the most recent cha
 
 ---
 
-### Example Workflow
+#### Example Workflow
 
 add c/Google r/SWE Intern
 delete 1
@@ -193,157 +451,137 @@ The deleted application reappears in the list.
 
 ---
 
-### Sequence Diagram: Undo Command
+##### Sequence Diagram: Undo Command
 
 ![undo\_sequence\_diag.png](diagrams/undo_sequence_diag.png)
 
 ---
 
-## Design Considerations
+#### Design Considerations
 
-### Aspect 1: Where the Application Object is Instantiated
-
-**Alternative 1 (Current Choice):** Instantiate the complete `Application` object inside the `Parser.createApplication()` method.
-
-Pros:
-
-* Parsing logic is centralized and reusable across commands
-* `ApplicationList` is insulated from parsing concerns; it only knows about domain objects
-* Clear separation of concerns between input parsing and model management
-* Validation happens at a single point, reducing the risk of inconsistency
-
-Cons:
-
-* Parser is tightly coupled to the `Application` class structure
-* Changes to the `Application` constructor signature require updating the parser
-* If multiple ways to create `Application` objects are needed, code duplication may occur
-
-**Alternative 2:** Instantiate inside model layer.
-
-Pros:
-
-* Reduces coupling between parser and model
-* Gives model more control over object creation
-
-Cons:
-
-* Violates Single Responsibility Principle
-* Duplicates validation logic
-* Harder testing
-* Reduced reusability
-
-**Rationale:** Centralizing instantiation in parser improves maintainability and consistency.
-
----
-
-### Aspect 2: When to Persist Data to Storage
-
-**Alternative 1 (Current Choice):** Auto-save after every command.
-
-Pros:
-
-* Prevents data loss
-* Guarantees consistency
-* Simplifies error handling
-* No user dependency
-
-Cons:
-
-* Increased disk I/O
-* Less efficient for batch operations
-* Slight latency
-
-**Alternative 2:** Manual save.
-
-Pros:
-
-* Better performance
-* User-controlled
-
-Cons:
-
-* High risk of data loss
-* User burden
-* Inconsistent state
-
-**Rationale:** Data safety outweighs performance cost.
-
----
-
-### Aspect 3: File Format for Persistent Storage
-
-**Alternative 1 (Current Choice):** Pipe-delimited format.
-
-Pros:
-
-* Human-readable
-* No dependencies
-* Simple logic
-* Fast I/O
-* Small file size
-
-Cons:
-
-* Not scalable
-* Delimiter conflicts
-* Fragile format
-
-**Alternative 2:** JSON
-
-Pros:
-
-* Structured
-* Extensible
-* Standard format
-
-Cons:
-
-* Requires libraries
-* Larger size
-* Overkill
-
-**Alternative 3:** Database
-
-Pros:
-
-* Scalable
-* Powerful queries
-
-Cons:
-
-* Complex
-* Heavy
-* Overkill
-
-**Rationale:** Pipe format is sufficient for current scope.
-
----
-
-### Aspect 4: Undo Implementation
+##### Aspect 4: Undo Implementation
 
 **Alternative 1 (Current Choice): Snapshot-based restoration**
 
-Pros:
+*Pros:*
+- Simple and reliable
+- Independent of command logic
+- Guarantees correct state restoration
 
-* Simple and reliable
-* Independent of command logic
-* Guarantees correct state restoration
-
-Cons:
-
-* Increased memory usage
+*Cons:*
+- Increased memory usage
 
 **Alternative 2: Command-based reversal**
 
-Pros:
+*Pros:*
+- More memory efficient
 
-* More memory efficient
+*Cons:*
+- Significantly more complex
+- Each command requires custom undo logic
 
-Cons:
-
-* Significantly more complex
-* Each command requires custom undo logic
-
-**Rationale:** Snapshot approach chosen for simplicity and reliability.
+**Rationale for Current Choice:** The snapshot approach was chosen for simplicity and reliability. In a student project managing a relatively small number of internship applications, the minimal memory overhead of storing snapshots is acceptable, and the guarantee of correct state restoration outweighs the efficiency benefits of command-based reversal. This design ensures that any future modifications to commands don't inadvertently break undo functionality.
 
 ---
+
+### Summary feature
+
+{Description of Summary feature implementation will be added here.}
+
+---
+
+## Documentation, logging, testing, configuration, dev-ops
+
+{Documentation, logging, testing, configuration, and dev-ops information will be added here.}
+
+---
+
+## Appendix: Requirements
+
+### Product scope
+
+#### Target user profile
+
+InternTrack is designed for students who apply to multiple internships and need a simple way to track their
+applications.
+
+The target users are:
+
+- university students applying for internships
+- users comfortable with command-line interfaces
+- applicants managing many applications simultaneously
+
+#### Value proposition
+
+InternTrack allows students to efficiently track internship applications from the command line.
+
+Instead of manually maintaining spreadsheets or notes, users can quickly record, update, and filter applications using
+simple commands.
+
+The application provides a lightweight and fast way to manage internship applications without requiring a graphical
+interface.
+
+---
+
+### User stories
+
+| Version | As a ...                                        | I want to ...                                     | So that I can ...                                                                     |
+|---------|-------------------------------------------------|---------------------------------------------------|---------------------------------------------------------------------------------------|
+| v1.0    | Year-2 CEG student applying to many internships | add a new application entry with company and role | keep all applications in one place                                                    |
+| v1.0    | Forgetful applicant                             | record an application deadline                    | avoid missing closing dates                                                           |
+| v1.0    | Student mass-applying during peak season        | list all applications                             | see what I have already applied to                                                    |
+| v1.0    | Student mass-applying during peak season        | delete an application                             | remove outdated applications                                                          |
+| v1.0    | Applicant networking with recruiters            | add a recruiter or HR contact                     | follow up with the correct person                                                     |
+| v1.0    | Applicant tracking progress                     | record outcomes per round                         | track application progress                                                            |
+| v1.0    | Applicant mass-applying mduring peak season     | filter outcomes of the current applying season    | filter application progress                                                           |
+| v2.0    | An organized student                            | sort internship applications                      | organize and view them based on criteria                                              |
+| v2.0    | A forgetful student                             | set a reminder for an internship application      | focus on important dates such as interviews, deadlines, or follow-ups                 |
+| v2.0    | A error-prone student                           | undo my most recent add, edit, or delete command  | easily recover from accidental mistakes                                               |
+| v2.0    | A data-driven student                           | view a summary of my internship applications      | see an overview of my application statuses, upcoming deadlines, and overall progress. 
+
+---
+
+### Use cases
+
+{Use cases will be added here.}
+
+---
+
+### Non-Functional Requirements
+
+1. The application should run on any system that supports Java 17 or above.
+2. The application should store application data locally in a text file.
+3. The system should respond to user commands within one second for typical usage.
+4. The application should provide clear error messages for invalid inputs.
+5. The application should support command-line usage without requiring a graphical interface.
+
+---
+
+### Glossary
+
+*Application* – A job or internship submission to a company.
+
+*Status* – The current stage of an application (e.g., Pending, Interview, Rejected, Accepted).
+
+*CLI* – Command Line Interface used to interact with the application.
+
+---
+
+## Appendix: Instructions for manual testing
+
+### Launch and shutdown
+
+{Instructions for launching and shutting down the application will be added here.}
+
+---
+
+### Deleting an application
+
+{Instructions for deleting an application will be added here.}
+
+---
+
+### Saving data
+
+{Instructions for saving data will be added here.}
+
