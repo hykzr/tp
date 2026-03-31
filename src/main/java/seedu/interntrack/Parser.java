@@ -192,14 +192,14 @@ public class Parser {
         PrefixedValue field = fields.get(0);
         return switch (field.prefix) {
         case COMPANY_PREFIX -> FilterCriteria.forText(FilterCriteria.Field.COMPANY,
-                parseRequiredTextValue(field.value, "Company name cannot be empty."));
+                    parseRequiredTextValue(field.value, "Company name cannot be empty."));
         case ROLE_PREFIX -> FilterCriteria.forText(FilterCriteria.Field.ROLE,
-                parseRequiredTextValue(field.value, "Role name cannot be empty."));
+                    parseRequiredTextValue(field.value, "Role name cannot be empty."));
         case DEADLINE_PREFIX -> FilterCriteria.forDeadline(parseDateValue(field.value));
         case CONTACT_PREFIX -> FilterCriteria.forText(FilterCriteria.Field.CONTACT,
-                parseRequiredTextValue(field.value, "Contact name cannot be empty."));
+                    parseRequiredTextValue(field.value, "Contact name cannot be empty."));
         case STATUS_PREFIX -> FilterCriteria.forText(FilterCriteria.Field.STATUS,
-                parseRequiredTextValue(field.value, "Status cannot be empty."));
+                    parseRequiredTextValue(field.value, "Status cannot be empty."));
         default -> throw new InternTrackException(FILTER_FORMAT_ERROR);
         };
     }
@@ -244,13 +244,16 @@ public class Parser {
             throw new InternTrackException("Application index must be a valid number.");
         }
     }
+
     /**
-     * Parses the sorting criteria from a sort command.
+     * Parses sorting criteria and optional flags from a sort command.
+     *
+     * <p>The command format is: sort by/CRITERIA [DESC] [NONNULL]</p>
      *
      * @param input The raw user input string.
-     * @return String array with from 1 to 2 elements, they are sorting criteria and direction.
-     * @throws InternTrackException If the index is missing or invalid.
-     *
+     * @return A String array where the first element is the sorting field,
+     *     followed by optional flags such as DESC or NONNULL.
+     * @throws InternTrackException If the format, criteria, or flags are invalid.
      */
     public static String[] parseSortCriteria(String input) throws InternTrackException {
         String[] parts = input.trim().split("\\s+", 2);
@@ -266,20 +269,20 @@ public class Parser {
                 && !criterias[0].equals(SORT_CRITERIA5)) {
             throw new InternTrackException("Wrong sort criteria, use either these: ROLE, COMPANY, DEADLINE, CONTACT");
         }
-        if(criterias.length == 1){ //No other flags
+        if (criterias.length == 1) { //No other flags
             return criterias;
         }
         //Extra flag
         boolean isDesc = false;
         boolean isNonnull = false;
-        for(String criteria : criterias[1].split("\\s+")){
+        for (String criteria : criterias[1].split("\\s+")) {
             if (!criteria.equals(SORT_FLAG1) && !criteria.equals(SORT_FLAG2)) {
                 throw new InternTrackException("Wrong flag, use either these: DESC, NONNULL");
             }
-            if(criteria.equals(SORT_FLAG1)){
+            if (criteria.equals(SORT_FLAG1)) {
                 isDesc = true;
             }
-            if(criteria.equals(SORT_FLAG2)){
+            if (criteria.equals(SORT_FLAG2)) {
                 isNonnull = true;
             }
         }
@@ -334,6 +337,14 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses a required text value by trimming whitespace and ensuring it is not empty.
+     *
+     * @param value        The raw text value to parse.
+     * @param emptyMessage The error message to throw if the value is empty.
+     * @return The trimmed text value.
+     * @throws InternTrackException If the value is empty.
+     */
     private static String parseRequiredTextValue(String value, String emptyMessage) throws InternTrackException {
         String trimmedValue = value.trim();
         if (trimmedValue.isEmpty()) {
@@ -344,6 +355,13 @@ public class Parser {
         return trimmedValue;
     }
 
+    /**
+     * Parses a LocalDate value from a string.
+     *
+     * @param value The raw date string.
+     * @return The parsed LocalDate.
+     * @throws InternTrackException If the date is empty or not in YYYY-MM-DD format.
+     */
     private static LocalDate parseDateValue(String value) throws InternTrackException {
         String trimmedValue = value.trim();
         if (trimmedValue.isEmpty()) {
@@ -359,6 +377,17 @@ public class Parser {
         }
     }
 
+    /**
+     * Extracts prefixed values from an input string.
+     *
+     * <p>Each value must begin with a valid prefix such as c/, r/, d/, ct/, or s/.
+     * This method separates the input into prefix-value pairs.</p>
+     *
+     * @param input       The input string containing prefixed values.
+     * @param formatError The error message to throw if the format is invalid.
+     * @return A list of PrefixedValue objects containing prefixes and their values.
+     * @throws InternTrackException If the input format is invalid.
+     */
     private static ArrayList<PrefixedValue> parsePrefixedValues(String input, String formatError)
             throws InternTrackException {
         String trimmedInput = input.trim();

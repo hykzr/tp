@@ -61,7 +61,7 @@ public class Ui {
     /**
      * Prints a confirmation message when a new application is added.
      *
-     * @param newApplication The application that was added.
+     * @param newApplication   The application that was added.
      * @param userApplications The current list used to retrieve the total count.
      */
     public static void printAddApplication(Application newApplication, ArrayList<Application> userApplications) {
@@ -73,7 +73,7 @@ public class Ui {
     /**
      * Prints a single application entry.
      *
-     * @param app The application to print.
+     * @param app   The application to print.
      * @param index The zero-based index of the application in the list.
      */
     private static void printApplication(Application app, int index) {
@@ -115,7 +115,7 @@ public class Ui {
      * @param criteria             The criterion used for filtering.
      */
     public static void printFilteredApplications(ArrayList<Application> filteredApplications,
-            FilterCriteria criteria) {
+                                                 FilterCriteria criteria) {
         String filterSummary = criteria.getSummary();
         if (filteredApplications.isEmpty()) {
             System.out.println("No applications found matching " + filterSummary + ".");
@@ -208,8 +208,8 @@ public class Ui {
      * Prints applications with upcoming deadlines within the specified number of days.
      *
      * @param upcomingApplications The list of applications with upcoming deadlines.
-     * @param numDays The number of days used for the deadline filter.
-     * @param remindDate The specific cutoff date for the reminder.
+     * @param numDays              The number of days used for the deadline filter.
+     * @param remindDate           The specific cutoff date for the reminder.
      */
     public static void printUpcomingDeadlines(ArrayList<Application> upcomingApplications,
                                               int numDays, LocalDate remindDate) {

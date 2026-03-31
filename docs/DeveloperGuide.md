@@ -64,14 +64,30 @@ Java standard libraries such as `java.util`, `java.io`, and `java.time` were use
 
 ### Architecture
 
-The architecture of InternTrack follows a layered design pattern with the following main components:
+![architecture\_diag.png](diagrams/architecture_diag.png)
 
+The ***Architecture Diagram*** given above explains the high-level design of the App. The architecture of **InternTrack
+** follows a layered design pattern with the following main components:
+
+* InternTrack: Responsible for the app's lifecycle. It initializes components in the correct sequence at launch and
+  ensures a clean shutdown by invoking necessary cleanup methods. It also orchestrates the application flow.
 * UI (Ui): Handles user input and output via the command-line interface
-* Logic (Parser, InternTrack): Processes user commands and orchestrates the application flow
-* Model (Application, ApplicationList): Maintains the in-memory data structure for applications
+* Parser: Processes user commands and handle back to InternTrack
+* Model (Application): Maintains the in-memory data structure for applications
 * Storage (Storage): Manages persistence of application data to disk
+* Common : A suite of utility classes (e.g.,ApplicationList, EditDetails, FilterCriteria) shared across all components.
+  The sequence of interaction follows a clear flow: User input → UI → Logic (Parser) → Model manipulation → Storage
+  persistence.
 
-The sequence of interaction follows a clear flow: User input → UI → Logic (Parser) → Model manipulation → Storage persistence.
+## Application List component
+
+![application\_list.png](diagrams/Application_List_diag.png)
+
+The ApplicationList component is a stateless utility class that functions as a logic middleware. 
+
+It does not maintain its own state or store the application data internally; instead, it provides a suite of pure functions that perform operations (adding, filtering, sorting, editing) on an ArrayList<Application> passed in by the caller. 
+
+This decoupling ensures that the data storage remains independent of the processing logic.
 
 ---
 
@@ -241,7 +257,8 @@ The `Parser` component is responsible for interpreting user input and converting
 
 ## Application Initialization: Loading Persisted Data
 
-Before any user interaction occurs, the application must load previously saved data from disk. This initialization step is critical for demonstrating how the storage mechanism works bidirectionally (save and load).
+Before any user interaction occurs, the application must load previously saved data from disk. This initialization step
+is critical for demonstrating how the storage mechanism works bidirectionally (save and load).
 
 When `InternTrack.main()` is invoked at startup:
 
@@ -253,7 +270,8 @@ When `InternTrack.main()` is invoked at startup:
 6. `parseFileString()` deserializes the pipe-delimited format back into `Application` objects
 7. Each deserialized `Application` is added to the in-memory `userApplications` list
 
-By the time the user sees the welcome prompt, all previously saved applications are already in memory. This design ensures:
+By the time the user sees the welcome prompt, all previously saved applications are already in memory. This design
+ensures:
 
 * No data loss — All previous applications are restored at startup
 * Consistency — The in-memory state matches the on-disk state at launch
@@ -296,15 +314,18 @@ The `Parser.createApplication()` method processes the raw input string:
 
 ##### Step 2: Object Creation and Default Initialization
 
-Once parsing is successful, `Parser.createApplication()` instantiates a new `Application` object with the extracted data.
+Once parsing is successful, `Parser.createApplication()` instantiates a new `Application` object with the extracted
+data.
 
-Critically, the `Application` constructor automatically assigns a default status of "Pending" to all newly created applications. This ensures every new application has a well-defined initial state.
+Critically, the `Application` constructor automatically assigns a default status of "Pending" to all newly created
+applications. This ensures every new application has a well-defined initial state.
 
 ---
 
 ##### Step 3: Model Update
 
-The newly created `Application` object is returned to `ApplicationList.addApplications()`, which performs final validation:
+The newly created `Application` object is returned to `ApplicationList.addApplications()`, which performs final
+validation:
 
 * Adds the application to the internal `userApplications` ArrayList
 * Returns the newly added `Application`
@@ -313,7 +334,8 @@ The newly created `Application` object is returned to `ApplicationList.addApplic
 
 ##### Step 4: Storage Persistence
 
-Immediately after the successful model update, `InternTrack.handleAddCommand()` calls `Storage.saveApplications(userApplications)` to persist the updated list to disk.
+Immediately after the successful model update, `InternTrack.handleAddCommand()` calls
+`Storage.saveApplications(userApplications)` to persist the updated list to disk.
 
 This ensures in-memory and on-disk states remain synchronized.
 
@@ -330,7 +352,8 @@ The `Storage.saveApplications()` method:
 
 ##### Step 5: User Feedback
 
-Finally, `Ui.printAddApplication()` displays a confirmation message showing the added application details and the updated total count.
+Finally, `Ui.printAddApplication()` displays a confirmation message showing the added application details and the
+updated total count.
 
 ---
 

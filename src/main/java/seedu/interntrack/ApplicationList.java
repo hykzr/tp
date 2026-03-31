@@ -15,7 +15,7 @@ public class ApplicationList {
      * Adds a new application parsed from the given input line to the list.
      *
      * @param userApplications The list to add the application to.
-     * @param line The raw input string containing application details.
+     * @param line             The raw input string containing application details.
      * @return The newly created Application object.
      * @throws InternTrackException If the input is missing required fields or has an invalid date.
      */
@@ -42,7 +42,7 @@ public class ApplicationList {
      *                              supplied.
      */
     public static Application editApplication(ArrayList<Application> userApplications,
-            int index, EditDetails editDetails) throws InternTrackException {
+                                              int index, EditDetails editDetails) throws InternTrackException {
         if (index < 1 || index > userApplications.size()) {
             logger.warning("Edit failed: application index out of range: " + index);
             throw new InternTrackException("Application index is out of range.");
@@ -86,7 +86,7 @@ public class ApplicationList {
      * @throws InternTrackException If the index is invalid.
      */
     public static Application editApplicationStatus(ArrayList<Application> userApplications,
-            int index, String status) throws InternTrackException {
+                                                    int index, String status) throws InternTrackException {
         return editApplication(userApplications, index, new EditDetails(null, null, null, null, status));
     }
 
@@ -98,7 +98,7 @@ public class ApplicationList {
      * @return A list of applications that match the criterion.
      */
     public static ArrayList<Application> filterApplications(ArrayList<Application> userApplications,
-            FilterCriteria criteria) {
+                                                            FilterCriteria criteria) {
         if (criteria.getField() == FilterCriteria.Field.DEADLINE) {
             return filterApplicationsOnOrBefore(userApplications, criteria.getDeadlineValue());
         }
@@ -115,6 +115,13 @@ public class ApplicationList {
         return filteredApplications;
     }
 
+    /**
+     * Filters applications whose deadlines are on or before the specified date.
+     *
+     * @param userApplications The list to filter.
+     * @param deadline         The cutoff date for filtering.
+     * @return A list of applications with deadlines on or before the given date.
+     */
     public static ArrayList<Application> filterApplicationsOnOrBefore(ArrayList<Application> userApplications,
                                                                       LocalDate deadline) {
         ArrayList<Application> filteredApplications = new ArrayList<>();
@@ -129,6 +136,13 @@ public class ApplicationList {
         return filteredApplications;
     }
 
+    /**
+     * Retrieves the string value of a specified field from an application.
+     *
+     * @param application The application to retrieve the value from.
+     * @param field       The field whose value is to be retrieved.
+     * @return The string value of the specified field, or null if not applicable.
+     */
     private static String getTextFieldValue(Application application, FilterCriteria.Field field) {
         return switch (field) {
         case COMPANY -> application.getCompany();
@@ -140,12 +154,21 @@ public class ApplicationList {
     }
 
     /**
-     * Sort applications by criteria.
+     * Sorts applications based on the given criteria.
      *
-     * @param userApplications The list to filter.
-     * @param criteria         status to match.
-     * @return A list of applications that has been sorted.
+     * <p>The first element in the criteria array specifies the field to sort by
+     * (e.g., "ROLE", "STATUS", "COMPANY", "CONTACT", "DEADLINE").
+     * <p>
+     * Optional flags:
+     * <ul>
+     *     <li>"DESC" - sorts in descending order</li>
+     *     <li>"NONNULL" - excludes applications with null values for the chosen field</li>
+     * </ul>
      *
+     * @param userApplications The list of applications to sort.
+     * @param criteria An array specifying the sorting field and optional flags.
+     * @return A new list of sorted applications.
+     * @throws InternTrackException If the sorting criteria is invalid.
      */
     public static ArrayList<Application> sortApplicationsByCriteria(ArrayList<Application> userApplications,
                                                                     String[] criteria) throws InternTrackException {
