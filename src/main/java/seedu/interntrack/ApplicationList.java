@@ -2,8 +2,8 @@ package seedu.interntrack;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Manages the list of internship applications.
@@ -15,7 +15,7 @@ public class ApplicationList {
      * Adds a new application parsed from the given input line to the list.
      *
      * @param userApplications The list to add the application to.
-     * @param line             The raw input string containing application details.
+     * @param line The raw input string containing application details.
      * @return The newly created Application object.
      * @throws InternTrackException If the input is missing required fields or has an invalid date.
      */
@@ -32,59 +32,111 @@ public class ApplicationList {
     }
 
     /**
-     * Edits the status of an existing application.
+     * Edits the fields of an existing application.
      *
      * @param userApplications The list containing the application.
      * @param index            The 1-based index of the application to edit.
-     * @param status           The new status value.
+     * @param editDetails      The collection of updated field values.
      * @return The updated Application object.
-     * @throws InternTrackException If the index is invalid.
+     * @throws InternTrackException If the index is invalid or no update fields were
+     *                              supplied.
      */
-    public static Application editApplicationStatus(ArrayList<Application> userApplications,
-                                                    int index, String status) throws InternTrackException {
+    public static Application editApplication(ArrayList<Application> userApplications,
+            int index, EditDetails editDetails) throws InternTrackException {
         if (index < 1 || index > userApplications.size()) {
             logger.warning("Edit failed: application index out of range: " + index);
             throw new InternTrackException("Application index is out of range.");
         }
 
-        if (status == null || status.trim().isEmpty()) {
-            logger.warning("Edit failed: status cannot be null or empty");
-            throw new InternTrackException("Status cannot be empty.");
+        if (editDetails == null || !editDetails.hasUpdates()) {
+            logger.warning("Edit failed: no update fields were provided");
+            throw new InternTrackException("Provide at least one field to edit.");
         }
 
         Application application = userApplications.get(index - 1);
         assert application != null : "Application to edit should not be null";
 
-        String oldStatus = application.getStatus();
-        logger.info("Updating application at index " + index
-                + " from status '" + oldStatus + "' to '" + status + "'");
+        if (editDetails.getCompany() != null) {
+            application.setCompany(editDetails.getCompany());
+        }
+        if (editDetails.getRole() != null) {
+            application.setRole(editDetails.getRole());
+        }
+        if (editDetails.getDeadline() != null) {
+            application.setDeadline(editDetails.getDeadline());
+        }
+        if (editDetails.getContact() != null) {
+            application.setContact(editDetails.getContact());
+        }
+        if (editDetails.getStatus() != null) {
+            application.setStatus(editDetails.getStatus());
+        }
 
-        application.setStatus(status);
-
-        assert application.getStatus().equals(status) : "Application status should be updated correctly";
+        logger.info("Updated application at index " + index + ": " + application);
         return application;
     }
 
     /**
-     * Filters applications by status.
+     * Edits only the status of an existing application.
+     *
+     * @param userApplications The list containing the application.
+     * @param index            The 1-based index of the application to edit.
+     * @param status           The updated status value.
+     * @return The updated Application object.
+     * @throws InternTrackException If the index is invalid.
+     */
+    public static Application editApplicationStatus(ArrayList<Application> userApplications,
+            int index, String status) throws InternTrackException {
+        return editApplication(userApplications, index, new EditDetails(null, null, null, null, status));
+    }
+
+    /**
+     * Filters applications using the supplied criterion.
      *
      * @param userApplications The list to filter.
-     * @param status           The status to match.
-     * @return A list of applications that match the status.
+     * @param criteria         The field and value used for filtering.
+     * @return A list of applications that match the criterion.
      */
-    public static ArrayList<Application> filterApplicationsByStatus(ArrayList<Application> userApplications,
-                                                                    String status) {
+    public static ArrayList<Application> filterApplications(ArrayList<Application> userApplications,
+            FilterCriteria criteria) {
+        if (criteria.getField() == FilterCriteria.Field.DEADLINE) {
+            return filterApplicationsOnOrBefore(userApplications, criteria.getDeadlineValue());
+        }
+
         ArrayList<Application> filteredApplications = new ArrayList<>();
         for (Application application : userApplications) {
-            String applicationStatus = application.getStatus();
-            assert applicationStatus != null : "Existing application must have status";
-            if (applicationStatus.equalsIgnoreCase(status)) {
+            String applicationValue = getTextFieldValue(application, criteria.getField());
+            if (applicationValue != null && applicationValue.equalsIgnoreCase(criteria.getTextValue())) {
                 filteredApplications.add(application);
             }
         }
-        logger.log(Level.INFO, "Filtered applications by status=" + status
+        logger.log(Level.INFO, "Filtered applications by " + criteria.getSummary()
                 + ". Matches: " + filteredApplications.size());
         return filteredApplications;
+    }
+
+    public static ArrayList<Application> filterApplicationsOnOrBefore(ArrayList<Application> userApplications,
+                                                                      LocalDate deadline) {
+        ArrayList<Application> filteredApplications = new ArrayList<>();
+        for (Application application : userApplications) {
+            LocalDate applicationDeadline = application.getDeadline();
+            if (applicationDeadline != null && !applicationDeadline.isAfter(deadline)) {
+                filteredApplications.add(application);
+            }
+        }
+        logger.log(Level.INFO, "Filtered applications on or before deadline=" + deadline
+                + ". Matches: " + filteredApplications.size());
+        return filteredApplications;
+    }
+
+    private static String getTextFieldValue(Application application, FilterCriteria.Field field) {
+        return switch (field) {
+        case COMPANY -> application.getCompany();
+        case ROLE -> application.getRole();
+        case CONTACT -> application.getContact();
+        case STATUS -> application.getStatus();
+        default -> null;
+        };
     }
 
     /**

@@ -8,14 +8,19 @@ add c/NUS r/TA d/
 list
 delete 4
 delete -1
-edit 2 s/Applied
-edit 1 s/Accepted
+edit 2 c/NUS School of Computing r/Teaching Assistant ct/Prof Xavier s/Applied
+edit 1 d/2024-12-31
 edit 2xc s/Accepted
 edit 123213
 edit 5 s/Rejected
 list
+filter r/Teaching Assistant
+filter c/Micron
+filter ct/Prof Xavier
+filter d/2025-01-01
 filter s/Pending
-filter s/Ghosted
+filter c/Ghosted
+filter c/Google r/Intern
 delete 1
 add c/ShopBack r/SE d/2025-11-11 ct/Harim
 add r/HE c/NVIDIA d/2026-03-27 ct/Prof X

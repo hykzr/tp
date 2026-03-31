@@ -3,11 +3,10 @@ package seedu.interntrack;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.ArrayList;
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 import org.junit.jupiter.api.Test;
-
 
 public class ApplicationListTest {
     @Test
@@ -90,47 +89,228 @@ public class ApplicationListTest {
         assertEquals("Johns", testList.get(0).getContact());
     }
 
+    @Test
+    public void editApplication_validFields_updatesSelectedFields() throws InternTrackException {
+        ArrayList<Application> testList = new ArrayList<>();
+        ApplicationList.addApplications(testList, "c/Google r/Intern d/2026-05-01 ct/Alice");
+        LocalDate updatedDeadline = LocalDate.parse("2026-06-15");
+        EditDetails editDetails = new EditDetails(
+                "Meta",
+                "Backend Engineer",
+                updatedDeadline,
+                "Bob",
+                "Applied");
+
+        Application updatedApplication = ApplicationList.editApplication(testList, 1, editDetails);
+
+        assertEquals("Meta", updatedApplication.getCompany());
+        assertEquals("Backend Engineer", updatedApplication.getRole());
+        assertEquals(updatedDeadline, updatedApplication.getDeadline());
+        assertEquals("Bob", updatedApplication.getContact());
+        assertEquals("Applied", updatedApplication.getStatus());
+    }
 
     @Test
     public void editApplicationStatus_validIndex_updatesStatus() throws InternTrackException {
         ArrayList<Application> testList = new ArrayList<>();
-        String testLine = "c/Google r/Intern";
+        ApplicationList.addApplications(testList, "c/Google r/Intern");
 
-        ApplicationList.addApplications(testList, testLine);
-
-        Application updatedApplication =
-                ApplicationList.editApplicationStatus(testList, 1, "Applied");
+        Application updatedApplication = ApplicationList.editApplicationStatus(testList, 1, "Applied");
 
         assertEquals("Applied", updatedApplication.getStatus());
         assertEquals("Applied", testList.get(0).getStatus());
     }
 
     @Test
-    public void editApplicationStatus_invalidIndex_throwsException() throws InternTrackException {
+    public void editApplication_invalidIndex_throwsException() throws InternTrackException {
         ArrayList<Application> testList = new ArrayList<>();
-        String testLine = "c/Google r/Intern";
-
-        ApplicationList.addApplications(testList, testLine);
+        ApplicationList.addApplications(testList, "c/Google r/Intern");
 
         InternTrackException exception = assertThrows(
                 InternTrackException.class,
-                () -> ApplicationList.editApplicationStatus(testList, 2, "Applied")
-        );
+                () -> ApplicationList.editApplication(testList, 2,
+                        new EditDetails("Meta", null, null, null, null)));
 
         assertEquals("Application index is out of range.", exception.getMessage());
     }
 
     @Test
-    public void filterApplicationsByStatus_matchingStatus_returnsFilteredList() throws InternTrackException {
+    public void filterApplications_companyCriterion_returnsFilteredList() throws InternTrackException {
+        ArrayList<Application> testList = new ArrayList<>();
+        ApplicationList.addApplications(testList, "c/Google r/Intern");
+        ApplicationList.addApplications(testList, "c/NUS r/TA");
+
+        ArrayList<Application> filteredApplications = ApplicationList.filterApplications(
+                testList,
+                FilterCriteria.forText(FilterCriteria.Field.COMPANY, "google"));
+
+        assertEquals(1, filteredApplications.size());
+        assertEquals("Google", filteredApplications.get(0).getCompany());
+    }
+
+    @Test
+    public void filterApplications_statusCriterion_returnsFilteredList() throws InternTrackException {
         ArrayList<Application> testList = new ArrayList<>();
         ApplicationList.addApplications(testList, "c/Google r/Intern");
         ApplicationList.addApplications(testList, "c/NUS r/TA");
         ApplicationList.editApplicationStatus(testList, 2, "Applied");
 
-        ArrayList<Application> filteredApplications =
-                ApplicationList.filterApplicationsByStatus(testList, "applied");
+        ArrayList<Application> filteredApplications = ApplicationList.filterApplications(
+                testList,
+                FilterCriteria.forText(FilterCriteria.Field.STATUS, "applied"));
 
         assertEquals(1, filteredApplications.size());
         assertEquals("Applied", filteredApplications.get(0).getStatus());
+    }
+
+    @Test
+    public void sortApplication_invalidCriteria_throwsException() throws InternTrackException {
+        ArrayList<Application> testList = new ArrayList<>();
+        String[] testCriteria = {"WEIRDCRITERIA", "DESC", "NONNULL"};
+        InternTrackException exception = assertThrows(
+                InternTrackException.class,
+                () -> ApplicationList.sortApplicationsByCriteria(testList, testCriteria)
+        );
+        assertEquals("Wrong sorting criteria, please try again", exception.getMessage());
+    }
+
+    @Test
+    public void sortApplication_deadlineCriteria_correctSize() throws InternTrackException {
+        ArrayList<Application> testList = new ArrayList<>();
+        String testLine = "c/NUS r/TA ct/Prof X";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Micron r/Embedded d/2027-01-01";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/ShopBack r/SE d/2025-11-11 ct/Harim";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/NVIDIA r/HE d/2026-03-27 ct/Prof X";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Shopee r/Sales d/2030-10-23 ct/Prof Y";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Micron r/Marketing d/2026-03-27 ct/Limux";
+        ApplicationList.addApplications(testList, testLine);
+        String[] testCriteria = {"DEADLINE", "DESC", "NONNULL"};
+        ArrayList<Application> sortedList = ApplicationList.sortApplicationsByCriteria(testList, testCriteria);
+        assertEquals(5, sortedList.size());
+    }
+
+    @Test
+    public void sortApplication_contactCriteria_correctSize() throws InternTrackException {
+        ArrayList<Application> testList = new ArrayList<>();
+        String testLine = "c/NUS r/TA ct/Prof X";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Micron r/Embedded d/2027-01-01";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/ShopBack r/SE d/2025-11-11 ct/Harim";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/NVIDIA r/HE d/2026-03-27 ct/Prof X";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Shopee r/Sales d/2030-10-23 ct/Prof Y";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Micron r/Marketing d/2026-03-27 ct/Limux";
+        ApplicationList.addApplications(testList, testLine);
+        String[] testCriteria = {"CONTACT", "DESC", "NONNULL"};
+        ArrayList<Application> sortedList = ApplicationList.sortApplicationsByCriteria(testList, testCriteria);
+        assertEquals(5, sortedList.size());
+    }
+
+    @Test
+    public void sortApplication_contactCriteria_correctFirst() throws InternTrackException {
+        ArrayList<Application> testList = new ArrayList<>();
+        String testLine = "c/NUS r/TA ct/Prof X";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Micron r/Embedded d/2027-01-01";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/ShopBack r/SE d/2025-11-11 ct/Harim";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/NVIDIA r/HE d/2026-03-27 ct/Prof X";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Shopee r/Sales d/2030-10-23 ct/Prof Y";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Micron r/Marketing d/2026-03-27 ct/Limux";
+        ApplicationList.addApplications(testList, testLine);
+        String[] testCriteria = {"CONTACT", "DESC", "NONNULL"};
+        ArrayList<Application> sortedList = ApplicationList.sortApplicationsByCriteria(testList, testCriteria);
+        assertEquals("Shopee", sortedList.get(0).getCompany());
+    }
+    @Test
+    public void sortApplication_roleCriteria_correctFirst() throws InternTrackException {
+        ArrayList<Application> testList = new ArrayList<>();
+        String testLine = "c/NUS r/TA ct/Prof X";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Micron r/Embedded d/2027-01-01";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/ShopBack r/SE d/2025-11-11 ct/Harim";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/NVIDIA r/HE d/2026-03-27 ct/Prof X";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Shopee r/Sales d/2030-10-23 ct/Prof Y";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Micron r/Marketing d/2026-03-27 ct/Limux";
+        ApplicationList.addApplications(testList, testLine);
+        String[] testCriteria = {"ROLE", "DESC"};
+        ArrayList<Application> sortedList = ApplicationList.sortApplicationsByCriteria(testList, testCriteria);
+        assertEquals("TA", sortedList.get(0).getRole());
+    }
+
+    @Test
+    public void sortApplication_companyCriteria_correctSecond() throws InternTrackException {
+        ArrayList<Application> testList = new ArrayList<>();
+        String testLine = "c/NUS r/TA ct/Prof X";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Micron r/Embedded d/2027-01-01";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/ShopBack r/SE d/2025-11-11 ct/Harim";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/NVIDIA r/HE d/2026-03-27 ct/Prof X";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Shopee r/Sales d/2030-10-23 ct/Prof Y";
+        ApplicationList.addApplications(testList, testLine);
+        testLine = "c/Micron r/Marketing d/2026-03-27 ct/Limux";
+        ApplicationList.addApplications(testList, testLine);
+        String[] testCriteria = {"COMPANY", "DESC"};
+        ArrayList<Application> sortedList = ApplicationList.sortApplicationsByCriteria(testList, testCriteria);
+        assertEquals("ShopBack", sortedList.get(1).getCompany());
+    }
+
+    @Test
+    public void filterApplications_deadlineCriterion_returnsFilteredList() throws InternTrackException {
+        ArrayList<Application> testList = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+
+        ApplicationList.addApplications(testList, "c/Google r/Intern d/" + today);
+        ApplicationList.addApplications(testList, "c/Meta r/Intern d/" + today.plusDays(5));
+        ApplicationList.addApplications(testList, "c/Amazon r/Intern d/" + today.minusDays(5));
+
+        ArrayList<Application> filteredApplications = ApplicationList.filterApplications(
+                testList,
+                FilterCriteria.forDeadline(today.plusDays(3)));
+
+        assertEquals(2, filteredApplications.size());
+    }
+
+    @Test
+    public void filterApplicationsOnOrBefore_emptyList_returnsEmpty() {
+        ArrayList<Application> testList = new ArrayList<>();
+        ArrayList<Application> filteredApplications = ApplicationList.filterApplicationsOnOrBefore(
+                testList,
+                LocalDate.now().plusDays(7));
+
+        assertEquals(0, filteredApplications.size());
+    }
+
+    @Test
+    public void filterApplicationsOnOrBefore_nullDeadlines_excluded() throws InternTrackException {
+        ArrayList<Application> testList = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+
+        ApplicationList.addApplications(testList, "c/Google r/Intern d/" + today.plusDays(2));
+        ApplicationList.addApplications(testList, "c/Meta r/Intern");
+
+        ArrayList<Application> filteredApplications = ApplicationList.filterApplicationsOnOrBefore(
+                testList,
+                today.plusDays(7));
+
+        assertEquals(1, filteredApplications.size());
     }
 }

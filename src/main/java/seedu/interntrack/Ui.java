@@ -1,5 +1,6 @@
 package seedu.interntrack;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -60,7 +61,7 @@ public class Ui {
     /**
      * Prints a confirmation message when a new application is added.
      *
-     * @param newApplication   The application that was added.
+     * @param newApplication The application that was added.
      * @param userApplications The current list used to retrieve the total count.
      */
     public static void printAddApplication(Application newApplication, ArrayList<Application> userApplications) {
@@ -79,12 +80,9 @@ public class Ui {
         String role = app.getRole();
         String company = app.getCompany();
         String status = app.getStatus();
-        assert company != null && !company.isEmpty() :
-                "Existing application must have company";
-        assert role != null && !role.isEmpty() :
-                "Existing application must have role";
-        assert status != null :
-                "Existing application must have status";
+        assert company != null && !company.isEmpty() : "Existing application must have company";
+        assert role != null && !role.isEmpty() : "Existing application must have role";
+        assert status != null : "Existing application must have status";
         String deadline = (app.getDeadline() != null) ? " Apply by " + app.getDeadline().toString() + "." : "";
         String contact = (app.getContact() != null) ? " Contact with " + app.getContact() + "." : "";
         System.out.println((index + 1) + ". " + role + " at " + company + " is " + status + "." + deadline + contact);
@@ -111,20 +109,22 @@ public class Ui {
     }
 
     /**
-     * Prints applications filtered by the given status.
+     * Prints applications filtered by the given criterion.
      *
      * @param filteredApplications The filtered list to display.
-     * @param status               The status used for filtering.
+     * @param criteria             The criterion used for filtering.
      */
-    public static void printFilteredApplications(ArrayList<Application> filteredApplications, String status) {
+    public static void printFilteredApplications(ArrayList<Application> filteredApplications,
+            FilterCriteria criteria) {
+        String filterSummary = criteria.getSummary();
         if (filteredApplications.isEmpty()) {
-            System.out.println("No applications found with status: " + status + ".");
+            System.out.println("No applications found matching " + filterSummary + ".");
             return;
         }
         int applicationCount = filteredApplications.size();
         System.out.println("You have " + applicationCount
                 + ((applicationCount > 1) ? " applications" : " application")
-                + " with status " + status + ".");
+                + " matching " + filterSummary + ".");
         for (int i = 0; i < applicationCount; i++) {
             Application app = filteredApplications.get(i);
             printApplication(app, i);
@@ -202,5 +202,29 @@ public class Ui {
      */
     public static void printUnknownCommand() {
         System.out.println(UNKNOWN_COMMAND_MESSAGE);
+    }
+
+    /**
+     * Prints applications with upcoming deadlines within the specified number of days.
+     *
+     * @param upcomingApplications The list of applications with upcoming deadlines.
+     * @param numDays The number of days used for the deadline filter.
+     * @param remindDate The specific cutoff date for the reminder.
+     */
+    public static void printUpcomingDeadlines(ArrayList<Application> upcomingApplications,
+                                              int numDays, LocalDate remindDate) {
+        if (upcomingApplications.isEmpty()) {
+            System.out.println("No applications due in the next " + numDays + " days.");
+            return;
+        }
+        int applicationCount = upcomingApplications.size();
+        String applicationLabel = (applicationCount > 1) ? " applications" : " application";
+        String dateRange = " (up to " + remindDate.toString() + "):";
+        System.out.println("You have " + applicationCount + applicationLabel
+                + " due in the next " + numDays + " days" + dateRange);
+        for (int i = 0; i < applicationCount; i++) {
+            Application app = upcomingApplications.get(i);
+            printApplication(app, i);
+        }
     }
 }

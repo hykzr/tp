@@ -2,15 +2,20 @@ package seedu.interntrack;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Parses user input strings into Application objects.
  */
 public class Parser {
-
-    public static final String REGEX = "(?=c/|r/|ct/|d/)";
+    private static final String COMPANY_PREFIX = "c/";
+    private static final String ROLE_PREFIX = "r/";
+    private static final String CONTACT_PREFIX = "ct/";
+    private static final String DEADLINE_PREFIX = "d/";
+    private static final String REGEX = "(?=c/|r/|ct/|d/)";
     private static final String DATE_FORMAT_ERROR = "Date must be in YYYY-MM-DD format.";
     private static final String STATUS_PREFIX = "s/";
     private static final String SORT_PREFIX = "by/";
@@ -21,8 +26,13 @@ public class Parser {
     private static final String SORT_CRITERIA5 = "STATUS";
     private static final String SORT_FLAG1 = "DESC";
     private static final String SORT_FLAG2 = "NONNULL";
-    private static final String EDIT_FORMAT_ERROR = "Use format: edit INDEX s/NEW_STATUS";
-    private static final String FILTER_FORMAT_ERROR = "Use format: filter s/STATUS";
+    private static final String EDIT_FORMAT_ERROR = "Use format: edit INDEX [c/COMPANY] [r/ROLE]"
+            + " [d/DEADLINE] [ct/CONTACT] [s/STATUS]";
+    private static final String FILTER_FORMAT_ERROR = "Use format: filter c/COMPANY, r/ROLE, d/DEADLINE,"
+            + " ct/CONTACT, or s/STATUS";
+    private static final String DUPLICATE_FIELD_ERROR = "Each field can only be specified once.";
+    private static final String FILTER_SINGLE_FIELD_ERROR = "Filter command accepts exactly one field.";
+    private static final Pattern PREFIX_PATTERN = Pattern.compile("ct/|c/|r/|d/|s/");
     private static final Logger logger = Logger.getLogger("Parser");
 
     /**
@@ -30,7 +40,8 @@ public class Parser {
      *
      * @param input The full command string entered by the user.
      * @return The constructed Application object.
-     * @throws InternTrackException If required fields are missing or the date format is invalid.
+     * @throws InternTrackException If required fields are missing or the date
+     *                              format is invalid.
      */
     public static Application createApplication(String input) throws InternTrackException {
         String[] parts = input.split(REGEX);
@@ -40,36 +51,17 @@ public class Parser {
         LocalDate deadline = null;
         for (String part : parts) {
             String trimmed = part.trim();
-            if (trimmed.startsWith("c/")) {
-                company = trimmed.substring(2).trim();
-                if (company.isEmpty()) {
-                    logger.log(Level.WARNING, "Company field is empty in input");
-                    throw new InternTrackException("Company name cannot be empty.");
-                }
-            } else if (trimmed.startsWith("r/")) {
-                role = trimmed.substring(2).trim();
-                if (role.isEmpty()) {
-                    logger.log(Level.WARNING, "Role field is empty in input");
-                    throw new InternTrackException("Role name cannot be empty.");
-                }
-            } else if (trimmed.startsWith("ct/")) {
-                contact = trimmed.substring(3).trim();
-                if (contact.isEmpty()) {
-                    logger.log(Level.WARNING, "Contact field is empty in input");
-                    throw new InternTrackException("Contact name cannot be empty.");
-                }
-            } else if (trimmed.startsWith("d/")) {
-                String dateString = trimmed.substring(2).trim();
-                if (dateString.isEmpty()) {
-                    logger.log(Level.WARNING, "Deadline field is empty in input");
-                    throw new InternTrackException("Deadline date cannot be empty.");
-                }
-                try {
-                    deadline = LocalDate.parse(dateString.trim());
-                } catch (Exception e) {
-                    logger.log(Level.WARNING, "Invalid date format in input: " + trimmed);
-                    throw new InternTrackException(DATE_FORMAT_ERROR);
-                }
+            if (trimmed.startsWith(COMPANY_PREFIX)) {
+                company = parseRequiredTextValue(trimmed.substring(COMPANY_PREFIX.length()),
+                        "Company name cannot be empty.");
+            } else if (trimmed.startsWith(ROLE_PREFIX)) {
+                role = parseRequiredTextValue(trimmed.substring(ROLE_PREFIX.length()),
+                        "Role name cannot be empty.");
+            } else if (trimmed.startsWith(CONTACT_PREFIX)) {
+                contact = parseRequiredTextValue(trimmed.substring(CONTACT_PREFIX.length()),
+                        "Contact name cannot be empty.");
+            } else if (trimmed.startsWith(DEADLINE_PREFIX)) {
+                deadline = parseDateValue(trimmed.substring(DEADLINE_PREFIX.length()));
             }
         }
         if (company == null || role == null) {
@@ -102,7 +94,11 @@ public class Parser {
 
         try {
             int index = Integer.parseInt(parts[1]);
-            assert index > 0 : "Application index should be positive";
+            if (index <= 0) {
+                logger.warning("Edit failed: index must be greater than 0");
+                throw new InternTrackException("Application index must be greater than 0.");
+            }
+
             return index;
         } catch (NumberFormatException e) {
             logger.warning("Invalid application index in edit command: " + parts[1]);
@@ -111,31 +107,101 @@ public class Parser {
     }
 
     /**
-     * Parses the new status from an edit command.
+     * Parses the updated fields from an edit command.
      *
      * @param input The raw user input string.
-     * @return The parsed status string.
-     * @throws InternTrackException If the status is missing.
+     * @return The parsed edit payload.
+     * @throws InternTrackException If the format or any supplied field is invalid.
      */
-    public static String parseEditStatus(String input) throws InternTrackException {
+    public static EditDetails parseEditDetails(String input) throws InternTrackException {
         assert input != null : "Edit command input should not be null";
 
         String[] parts = input.trim().split("\\s+", 3);
 
-        if (parts.length < 3 || !parts[2].startsWith(STATUS_PREFIX)) {
-            logger.warning("Invalid edit command format: missing status prefix");
+        if (parts.length < 3) {
+            logger.warning("Invalid edit command format: missing editable fields");
             throw new InternTrackException(EDIT_FORMAT_ERROR);
         }
 
-        String status = parts[2].substring(STATUS_PREFIX.length()).trim();
+        ArrayList<PrefixedValue> fields = parsePrefixedValues(parts[2], EDIT_FORMAT_ERROR);
+        String company = null;
+        String role = null;
+        LocalDate deadline = null;
+        String contact = null;
+        String status = null;
 
-        if (status.isEmpty()) {
-            logger.warning("Empty status provided in edit command");
-            throw new InternTrackException("Status cannot be empty.");
+        for (PrefixedValue field : fields) {
+            switch (field.prefix) {
+            case COMPANY_PREFIX:
+                if (company != null) {
+                    throw new InternTrackException(DUPLICATE_FIELD_ERROR);
+                }
+                company = parseRequiredTextValue(field.value, "Company name cannot be empty.");
+                break;
+            case ROLE_PREFIX:
+                if (role != null) {
+                    throw new InternTrackException(DUPLICATE_FIELD_ERROR);
+                }
+                role = parseRequiredTextValue(field.value, "Role name cannot be empty.");
+                break;
+            case DEADLINE_PREFIX:
+                if (deadline != null) {
+                    throw new InternTrackException(DUPLICATE_FIELD_ERROR);
+                }
+                deadline = parseDateValue(field.value);
+                break;
+            case CONTACT_PREFIX:
+                if (contact != null) {
+                    throw new InternTrackException(DUPLICATE_FIELD_ERROR);
+                }
+                contact = parseRequiredTextValue(field.value, "Contact name cannot be empty.");
+                break;
+            case STATUS_PREFIX:
+                if (status != null) {
+                    throw new InternTrackException(DUPLICATE_FIELD_ERROR);
+                }
+                status = parseRequiredTextValue(field.value, "Status cannot be empty.");
+                break;
+            default:
+                throw new InternTrackException(EDIT_FORMAT_ERROR);
+            }
         }
 
-        assert !status.isBlank() : "Parsed status should not be blank";
-        return status;
+        return new EditDetails(company, role, deadline, contact, status);
+    }
+
+    /**
+     * Parses the filter criterion from a filter command.
+     *
+     * @param input The raw user input string.
+     * @return The parsed filter criterion.
+     * @throws InternTrackException If the format or filter field is invalid.
+     */
+    public static FilterCriteria parseFilterCriteria(String input) throws InternTrackException {
+        String[] parts = input.trim().split("\\s+", 2);
+
+        if (parts.length < 2) {
+            throw new InternTrackException(FILTER_FORMAT_ERROR);
+        }
+
+        ArrayList<PrefixedValue> fields = parsePrefixedValues(parts[1], FILTER_FORMAT_ERROR);
+        if (fields.size() != 1) {
+            throw new InternTrackException(FILTER_SINGLE_FIELD_ERROR);
+        }
+
+        PrefixedValue field = fields.get(0);
+        return switch (field.prefix) {
+        case COMPANY_PREFIX -> FilterCriteria.forText(FilterCriteria.Field.COMPANY,
+                parseRequiredTextValue(field.value, "Company name cannot be empty."));
+        case ROLE_PREFIX -> FilterCriteria.forText(FilterCriteria.Field.ROLE,
+                parseRequiredTextValue(field.value, "Role name cannot be empty."));
+        case DEADLINE_PREFIX -> FilterCriteria.forDeadline(parseDateValue(field.value));
+        case CONTACT_PREFIX -> FilterCriteria.forText(FilterCriteria.Field.CONTACT,
+                parseRequiredTextValue(field.value, "Contact name cannot be empty."));
+        case STATUS_PREFIX -> FilterCriteria.forText(FilterCriteria.Field.STATUS,
+                parseRequiredTextValue(field.value, "Status cannot be empty."));
+        default -> throw new InternTrackException(FILTER_FORMAT_ERROR);
+        };
     }
 
     /**
@@ -143,22 +209,15 @@ public class Parser {
      *
      * @param input The raw user input string.
      * @return The parsed status string.
-     * @throws InternTrackException If the status is missing.
+     * @throws InternTrackException If the status filter is missing.
      */
     public static String parseFilterStatus(String input) throws InternTrackException {
-        String[] parts = input.trim().split("\\s+", 2);
-
-        if (parts.length < 2 || !parts[1].startsWith(STATUS_PREFIX)) {
+        FilterCriteria criteria = parseFilterCriteria(input);
+        if (criteria.getField() != FilterCriteria.Field.STATUS) {
             throw new InternTrackException(FILTER_FORMAT_ERROR);
         }
 
-        String status = parts[1].substring(STATUS_PREFIX.length()).trim();
-
-        if (status.isEmpty()) {
-            throw new InternTrackException("Status cannot be empty.");
-        }
-
-        return status;
+        return criteria.getTextValue();
     }
 
     /**
@@ -235,6 +294,105 @@ public class Parser {
 
         return newCriteriaList.toArray(new String[0]);
     }
+
+    /**
+     * Parses the number of days from a remind command.
+     * If no number is provided, defaults to 7 days.
+     *
+     * @param input The raw user input string.
+     * @return The parsed number of days.
+     * @throws InternTrackException If the input is not a valid positive integer.
+     */
+    public static int parseRemindDays(String input) throws InternTrackException {
+        assert input != null : "Remind command input should not be null";
+
+        String[] parts = input.trim().split("\\s+", 2);
+
+        // If no days specified, default to 7
+        if (parts.length < 2) {
+            logger.log(Level.INFO, "No days specified for remind command, defaulting to 7 days");
+            return 7;
+        }
+
+        String daysString = parts[1].trim();
+
+        try {
+            int days = Integer.parseInt(daysString);
+
+            if (days <= 0) {
+                logger.warning("Invalid number of days in remind command: " + daysString);
+                throw new InternTrackException("Number of days must be greater than 0.");
+            }
+
+            assert days > 0 : "Parsed days should be positive";
+            logger.log(Level.INFO, "Successfully parsed remind command with " + days + " days");
+            return days;
+
+        } catch (NumberFormatException e) {
+            logger.warning("Invalid day format in remind command: " + daysString);
+            throw new InternTrackException("Days must be a valid number. Use format: remind [DAYS]");
+        }
+    }
+
+    private static String parseRequiredTextValue(String value, String emptyMessage) throws InternTrackException {
+        String trimmedValue = value.trim();
+        if (trimmedValue.isEmpty()) {
+            logger.log(Level.WARNING, "Empty value provided for a prefixed field");
+            throw new InternTrackException(emptyMessage);
+        }
+
+        return trimmedValue;
+    }
+
+    private static LocalDate parseDateValue(String value) throws InternTrackException {
+        String trimmedValue = value.trim();
+        if (trimmedValue.isEmpty()) {
+            logger.log(Level.WARNING, "Deadline field is empty in input");
+            throw new InternTrackException("Deadline date cannot be empty.");
+        }
+
+        try {
+            return LocalDate.parse(trimmedValue);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Invalid date format in input: " + trimmedValue);
+            throw new InternTrackException(DATE_FORMAT_ERROR);
+        }
+    }
+
+    private static ArrayList<PrefixedValue> parsePrefixedValues(String input, String formatError)
+            throws InternTrackException {
+        String trimmedInput = input.trim();
+        Matcher matcher = PREFIX_PATTERN.matcher(trimmedInput);
+        ArrayList<PrefixedValue> prefixedValues = new ArrayList<>();
+        ArrayList<Integer> prefixStarts = new ArrayList<>();
+        ArrayList<String> prefixes = new ArrayList<>();
+
+        while (matcher.find()) {
+            prefixStarts.add(matcher.start());
+            prefixes.add(matcher.group());
+        }
+
+        if (prefixStarts.isEmpty() || prefixStarts.get(0) != 0) {
+            throw new InternTrackException(formatError);
+        }
+
+        for (int i = 0; i < prefixes.size(); i++) {
+            int valueStart = prefixStarts.get(i) + prefixes.get(i).length();
+            int valueEnd = (i == prefixes.size() - 1) ? trimmedInput.length() : prefixStarts.get(i + 1);
+            String value = trimmedInput.substring(valueStart, valueEnd);
+            prefixedValues.add(new PrefixedValue(prefixes.get(i), value));
+        }
+
+        return prefixedValues;
+    }
+
+    private static class PrefixedValue {
+        private final String prefix;
+        private final String value;
+
+        private PrefixedValue(String prefix, String value) {
+            this.prefix = prefix;
+            this.value = value;
+        }
+    }
 }
-
-

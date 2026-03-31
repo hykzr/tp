@@ -1,9 +1,10 @@
 package seedu.interntrack;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Stack;
-import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Serves as the main entry point and command handler for InternTrack.
@@ -17,6 +18,7 @@ public class InternTrack {
     private static final String DELETE_COMMAND = "delete";
     private static final String SORT_COMMAND = "sort";
     private static final String UNDO_COMMAND = "undo";
+    private static final String REMIND_COMMAND = "remind";
     private static final Logger logger = Logger.getLogger("InternTrack");
 
     /**
@@ -44,7 +46,7 @@ public class InternTrack {
     /**
      * Dispatches the given command to the appropriate handler.
      *
-     * @param line             The raw command string entered by the user.
+     * @param line The raw command string entered by the user.
      * @param userApplications The current list of applications.
      * @param undoHistory The stack storing previous application list states for undo.
      */
@@ -74,6 +76,8 @@ public class InternTrack {
                 handleListCommand(userApplications);
             } else if (command.equals(SORT_COMMAND)) {
                 handleSortCommand(trimmedLine, userApplications);
+            } else if (command.equals(REMIND_COMMAND)) {
+                handleRemindCommand(trimmedLine, userApplications);
             } else {
                 logger.log(Level.WARNING, "Unknown command received: " + line);
                 Ui.printUnknownCommand();
@@ -85,7 +89,15 @@ public class InternTrack {
     }
 
     /**
-     * Handles the add command by adding a new application to current application lists.
+     * Adds a new application to the current application list.
+     * Parses the input line to create an application, saves the current state
+     * for undo functionality, logs the operation, displays confirmation,
+     * and persists changes to local storage.
+     *
+     * @param line The raw input string containing application details.
+     * @param userApplications The list of applications to be updated.
+     * @param undoHistory The stack used to store previous states of the list.
+     * @throws InternTrackException If the input format is invalid, required fields are missing, or parsing fails.
      */
     private static void handleAddCommand(String line, ArrayList<Application> userApplications,
                                          Stack<ArrayList<Application>> undoHistory)
@@ -144,7 +156,7 @@ public class InternTrack {
     }
 
     /**
-     * Handles the edit command by updating an application's status.
+     * Handles the edit command by updating an application's details.
      */
     private static void handleEditCommand(String line, ArrayList<Application> userApplications,
                                           Stack<ArrayList<Application>> undoHistory)
@@ -152,19 +164,13 @@ public class InternTrack {
         logger.info("Processing edit command: " + line);
 
         int index = Parser.parseEditIndex(line);
-        String status = Parser.parseEditStatus(line);
+        EditDetails editDetails = Parser.parseEditDetails(line);
 
-        assert !status.isBlank() : "Parsed status should not be blank";
-
-        logger.info("Editing application at index " + index + " with new status: " + status);
+        logger.info("Editing application at index " + index);
 
         saveStateForUndo(userApplications, undoHistory);
 
-        Application updatedApplication =
-                ApplicationList.editApplicationStatus(userApplications, index, status);
-
-        assert updatedApplication.getStatus().equals(status)
-                : "Application status should match edited status";
+        Application updatedApplication = ApplicationList.editApplication(userApplications, index, editDetails);
 
         Ui.printEditApplication(updatedApplication, index);
         Storage.saveApplications(userApplications);
@@ -173,14 +179,13 @@ public class InternTrack {
     }
 
     /**
-     * Handles the filter command by listing applications that match the status.
+     * Handles the filter command by listing applications that match the details.
      */
     private static void handleFilterCommand(String line, ArrayList<Application> userApplications)
             throws InternTrackException {
-        String status = Parser.parseFilterStatus(line);
-        ArrayList<Application> filteredApplications =
-                ApplicationList.filterApplicationsByStatus(userApplications, status);
-        Ui.printFilteredApplications(filteredApplications, status);
+        FilterCriteria criteria = Parser.parseFilterCriteria(line);
+        ArrayList<Application> filteredApplications = ApplicationList.filterApplications(userApplications, criteria);
+        Ui.printFilteredApplications(filteredApplications, criteria);
     }
 
     /**
@@ -217,6 +222,24 @@ public class InternTrack {
         Storage.saveApplications(userApplications);
         Ui.printUndoSuccess();
         logger.info("Successfully restored previous application list state");
+    }
+
+    /**
+     * Handles the remind command by filtering and displaying applications with deadlines.
+     * Parses the number of days from the input, calculates the cutoff date, and
+     * triggers the UI to print applications due on or before that date.
+     *
+     * @param line The raw command string containing the number of days.
+     * @param userApplications The current list of applications to filter.
+     * @throws InternTrackException If the input format is invalid.
+     */
+    private static void handleRemindCommand
+    (String line, ArrayList<Application> userApplications) throws InternTrackException {
+        int numDays = Parser.parseRemindDays(line);
+        LocalDate remindDate = LocalDate.now().plusDays(numDays);
+        ArrayList<Application> filteredApplications =
+                ApplicationList.filterApplicationsOnOrBefore(userApplications, remindDate);
+        Ui.printUpcomingDeadlines(filteredApplications, numDays, remindDate);
     }
 
     /**

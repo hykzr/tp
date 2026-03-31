@@ -1,14 +1,15 @@
 package seedu.interntrack;
-import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-
+import java.time.LocalDate;
+import org.junit.jupiter.api.Test;
 
 public class ParserTest {
     @Test
-    public void parse_validAddCommand_success() throws InternTrackException{
+    public void parse_validAddCommand_success() throws InternTrackException {
         String input = "add c/Google r/Software Engineer";
         Application result = Parser.createApplication(input);
         assertEquals("Google", result.getCompany());
@@ -19,7 +20,7 @@ public class ParserTest {
     }
 
     @Test
-    public void parse_addCommandWithExtraSpaces_success () throws InternTrackException {
+    public void parse_addCommandWithExtraSpaces_success() throws InternTrackException {
         String input = "add c/ Google r/ Software Engineer";
         Application result = Parser.createApplication(input);
         assertEquals("Google", result.getCompany());
@@ -48,7 +49,81 @@ public class ParserTest {
     }
 
     @Test
-    public void parse_filterCommand_success() throws InternTrackException {
+    public void parseEditDetails_multipleFields_success() throws InternTrackException {
+        String input = "edit 2 c/Meta r/Backend Engineer d/2026-04-30 ct/Bob s/Applied";
+
+        EditDetails editDetails = Parser.parseEditDetails(input);
+
+        assertEquals("Meta", editDetails.getCompany());
+        assertEquals("Backend Engineer", editDetails.getRole());
+        assertEquals(LocalDate.parse("2026-04-30"), editDetails.getDeadline());
+        assertEquals("Bob", editDetails.getContact());
+        assertEquals("Applied", editDetails.getStatus());
+    }
+
+    @Test
+    public void parseEditDetails_statusOnly_success() throws InternTrackException {
+        String input = "edit 3 s/Accepted";
+
+        EditDetails editDetails = Parser.parseEditDetails(input);
+
+        assertEquals("Accepted", editDetails.getStatus());
+        assertNull(editDetails.getCompany());
+        assertNull(editDetails.getRole());
+        assertNull(editDetails.getDeadline());
+        assertNull(editDetails.getContact());
+    }
+
+    @Test
+    public void parseEditDetails_noFields_throwsException() {
+        String input = "edit 1";
+        InternTrackException exception = assertThrows(InternTrackException.class, () -> {
+            Parser.parseEditDetails(input);
+        });
+        assertEquals("Use format: edit INDEX [c/COMPANY] [r/ROLE] [d/DEADLINE] [ct/CONTACT] [s/STATUS]",
+                exception.getMessage());
+    }
+
+    @Test
+    public void parseEditDetails_duplicateFields_throwsException() {
+        String input = "edit 1 c/Google c/Meta";
+        InternTrackException exception = assertThrows(InternTrackException.class, () -> {
+            Parser.parseEditDetails(input);
+        });
+        assertEquals("Each field can only be specified once.", exception.getMessage());
+    }
+
+    @Test
+    public void parseFilterCriteria_company_success() throws InternTrackException {
+        String input = "filter c/Google";
+
+        FilterCriteria criteria = Parser.parseFilterCriteria(input);
+
+        assertEquals(FilterCriteria.Field.COMPANY, criteria.getField());
+        assertEquals("Google", criteria.getTextValue());
+    }
+
+    @Test
+    public void parseFilterCriteria_deadline_success() throws InternTrackException {
+        String input = "filter d/2026-04-30";
+
+        FilterCriteria criteria = Parser.parseFilterCriteria(input);
+
+        assertEquals(FilterCriteria.Field.DEADLINE, criteria.getField());
+        assertEquals(LocalDate.parse("2026-04-30"), criteria.getDeadlineValue());
+    }
+
+    @Test
+    public void parseFilterCriteria_multipleFields_throwsException() {
+        String input = "filter c/Google r/Intern";
+        InternTrackException exception = assertThrows(InternTrackException.class, () -> {
+            Parser.parseFilterCriteria(input);
+        });
+        assertEquals("Filter command accepts exactly one field.", exception.getMessage());
+    }
+
+    @Test
+    public void parse_filterStatusCommand_success() throws InternTrackException {
         String input = "filter s/Applied";
         String status = Parser.parseFilterStatus(input);
         assertEquals("Applied", status);
@@ -58,17 +133,103 @@ public class ParserTest {
     public void parse_filterCommandMissingPrefix_throwsException() {
         String input = "filter Applied";
         InternTrackException exception = assertThrows(InternTrackException.class, () -> {
-            Parser.parseFilterStatus(input);
+            Parser.parseFilterCriteria(input);
         });
-        assertEquals("Use format: filter s/STATUS", exception.getMessage());
+        assertEquals("Use format: filter c/COMPANY, r/ROLE, d/DEADLINE, ct/CONTACT, or s/STATUS",
+                exception.getMessage());
     }
 
     @Test
     public void parse_filterCommandEmptyStatus_throwsException() {
         String input = "filter s/ ";
         InternTrackException exception = assertThrows(InternTrackException.class, () -> {
-            Parser.parseFilterStatus(input);
+            Parser.parseFilterCriteria(input);
         });
         assertEquals("Status cannot be empty.", exception.getMessage());
+    }
+
+    @Test
+    public void parseRemindDays_noArgument_returnsDefault() throws InternTrackException {
+        String input = "remind";
+        int days = Parser.parseRemindDays(input);
+        assertEquals(7, days);
+    }
+
+    @Test
+    public void parseRemindDays_singleDigit_success() throws InternTrackException {
+        String input = "remind 3";
+        int days = Parser.parseRemindDays(input);
+        assertEquals(3, days);
+    }
+
+    @Test
+    public void parseRemindDays_multipleDigits_success() throws InternTrackException {
+        String input = "remind 14";
+        int days = Parser.parseRemindDays(input);
+        assertEquals(14, days);
+    }
+
+    @Test
+    public void parseRemindDays_largeNumber_success() throws InternTrackException {
+        String input = "remind 365";
+        int days = Parser.parseRemindDays(input);
+        assertEquals(365, days);
+    }
+
+    @Test
+    public void parseRemindDays_zero_throwsException() {
+        String input = "remind 0";
+        InternTrackException exception = assertThrows(
+                InternTrackException.class,
+                () -> Parser.parseRemindDays(input)
+        );
+        assertEquals("Number of days must be greater than 0.", exception.getMessage());
+    }
+
+    @Test
+    public void parseRemindDays_negativeNumber_throwsException() {
+        String input = "remind -5";
+        InternTrackException exception = assertThrows(
+                InternTrackException.class,
+                () -> Parser.parseRemindDays(input)
+        );
+        assertEquals("Number of days must be greater than 0.", exception.getMessage());
+    }
+
+    @Test
+    public void parseRemindDays_nonIntegerInput_throwsException() {
+        String input = "remind abc";
+        InternTrackException exception = assertThrows(
+                InternTrackException.class,
+                () -> Parser.parseRemindDays(input)
+        );
+        assertEquals("Days must be a valid number. Use format: remind [DAYS]", exception.getMessage());
+    }
+
+    @Test
+    public void parseRemindDays_decimalNumber_throwsException() {
+        String input = "remind 3.5";
+        InternTrackException exception = assertThrows(
+                InternTrackException.class,
+                () -> Parser.parseRemindDays(input)
+        );
+        assertEquals("Days must be a valid number. Use format: remind [DAYS]", exception.getMessage());
+    }
+
+    @Test
+    public void parseRemindDays_extraSpaces_success() throws InternTrackException {
+        String input = "remind    7";
+        int days = Parser.parseRemindDays(input);
+        assertEquals(7, days);
+    }
+
+    @Test
+    public void parseRemindDays_specialCharacters_throwsException() {
+        String input = "remind @5";
+        InternTrackException exception = assertThrows(
+                InternTrackException.class,
+                () -> Parser.parseRemindDays(input)
+        );
+        assertEquals("Days must be a valid number. Use format: remind [DAYS]", exception.getMessage());
     }
 }
