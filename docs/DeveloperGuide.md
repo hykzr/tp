@@ -1,183 +1,129 @@
-# Developer Guide
-
-## Acknowledgements
-
-This project was developed as part of the CS2113 Team Project at the National University of Singapore.
-
-The project structure and development workflow follow the guidelines from the SE-EDU project template:
-https://se-education.org/
-
-The project focuses on learning Object-Oriented Programming (OOP) principles and good coding practices for collaborative software development.
-
-The project was developed using Java and standard software engineering tools such as Git for version control and GitHub for project management and collaboration.
-
-Java standard libraries such as `java.util`, `java.io`, and `java.time` were used in the implementation.
-
----
-
 # Design & Implementation
 
 ## Architecture
 
-InternTrack follows a layered architecture consisting of four main components:
+The architecture of InternTrack follows a layered design pattern with the following main components:
 
-- **UI (Ui)** – Handles user interaction through the command-line interface.
-- **Logic (Parser, InternTrack)** – Interprets commands and coordinates system operations.
-- **Model (Application, ApplicationList)** – Maintains in-memory application data.
-- **Storage (Storage)** – Handles saving and loading application data from disk.
+* UI (Ui): Handles user input and output via the command-line interface
+* Logic (Parser, InternTrack): Processes user commands and orchestrates the application flow
+* Model (Application, ApplicationList): Maintains the in-memory data structure for applications
+* Storage (Storage): Manages persistence of application data to disk
 
-The interaction flow is:
-
-User Input → UI → Parser → InternTrack → Model → Storage
-
-This layered separation ensures that each component has a clearly defined responsibility.
+The sequence of interaction follows a clear flow: User input → UI → Logic (Parser) → Model manipulation → Storage persistence.
 
 ---
 
 ## Application Initialization: Loading Persisted Data
 
-Before user interaction begins, the application loads previously saved data from disk.
+Before any user interaction occurs, the application must load previously saved data from disk. This initialization step is critical for demonstrating how the storage mechanism works bidirectionally (save and load).
 
-When `InternTrack.main()` is invoked:
+When `InternTrack.main()` is invoked at startup:
 
-1. An empty `userApplications` ArrayList is created.
-2. `Storage.loadApplications(userApplications)` is called.
-3. The system checks if the `./data/` directory and `./data/applications.txt` exist.
-4. Missing files or directories are created automatically.
-5. Each line from the file is parsed using `Storage.parseFileString()`.
-6. Pipe-delimited data is converted back into `Application` objects.
-7. Each application is added to the in-memory list.
+1. An empty `userApplications` ArrayList is created in memory
+2. Immediately, `Storage.loadApplications(userApplications)` is called
+3. This method checks if the data directory (`./data/`) and file (`./data/applications.txt`) exist
+4. If either is missing, they are created automatically (graceful initialization)
+5. The file is read line by line; each line is passed to `Storage.parseFileString()`
+6. `parseFileString()` deserializes the pipe-delimited format back into `Application` objects
+7. Each deserialized `Application` is added to the in-memory `userApplications` list
 
-This design ensures:
+By the time the user sees the welcome prompt, all previously saved applications are already in memory. This design ensures:
 
-- previously saved data is restored
-- in-memory state matches stored data
-- corrupted entries are skipped safely
-
----
-
-# Implementation of Add Feature
-
-The `add` command allows users to record a new internship application.
-
-The command pipeline consists of five stages:
-
-1. Parsing user input
-2. Object creation
-3. Model update
-4. Storage persistence
-5. User feedback
+* No data loss — All previous applications are restored at startup
+* Consistency — The in-memory state matches the on-disk state at launch
+* Error resilience — Malformed lines are logged and skipped rather than crashing the app
 
 ---
 
-## Step 1: Parsing User Input
+## Implementation of Add Feature
 
-Example command:
+The add command follows a 5-step pipeline:
 
-```
-add c/Google r/Software Engineer d/2024-03-31 ct/John Doe
-```
-
-The input is processed as follows:
-
-1. `Ui.readCommand()` receives the input.
-2. The command is passed to `InternTrack.handleCommand()`.
-3. The system identifies the `add` prefix and routes the request to `handleAddCommand()`.
-
-`Parser.createApplication()` processes the input by:
-
-- splitting tokens using regex `(?=c/|r/|ct/|d/)`
-- extracting required fields (`c/`, `r/`)
-- extracting optional fields (`d/`, `ct/`)
-- validating that required fields are present
-- parsing deadline values using `LocalDate.parse()`
-
-Invalid inputs throw an `InternTrackException`.
+1. Parsing — User input is tokenized and validated
+2. Object Creation — A new `Application` entity is instantiated with default status
+3. Model Update — The application is added to the in-memory list
+4. Storage Persistence — The updated model is serialized to disk
+5. User Feedback — Confirmation is displayed to the user
 
 ---
 
-## Step 2: Object Creation
+## Detailed Walkthrough of Add Command
 
-Once parsing succeeds, a new `Application` object is created:
+### Step 1: Parsing User Input
 
-```
-new Application(company, role, deadline, contact)
-```
+When a user enters
+`add c/Google r/Software Engineer d/2024-03-31 ct/John Doe`,
+the input is received by `Ui.readCommand()` and passed to `InternTrack.handleCommand()`.
 
-The constructor automatically assigns the default status:
+This method inspects the command prefix and dispatches to `handleAddCommand()`.
 
-```
-Pending
-```
+The `Parser.createApplication()` method processes the raw input string:
 
-This ensures every application begins with a consistent initial state.
-
----
-
-## Step 3: Model Update
-
-The new application is inserted into the system using:
-
-```
-ApplicationList.addApplications()
-```
-
-This method adds the application to the internal `userApplications` list.
+* Uses a regex split pattern `(?=c/|r/|ct/|d/)` to tokenize by command prefixes
+* Extracts mandatory fields: `c/` (Company) and `r/` (Role)
+* Extracts optional fields: `d/` (Deadline in YYYY-MM-DD format) and `ct/` (Contact)
+* Validates that mandatory fields are non-empty; if missing or empty, throws `InternTrackException`
+* If a deadline is provided, parses it using `LocalDate.parse()`; invalid dates trigger an exception
 
 ---
 
-## Step 4: Storage Persistence
+### Step 2: Object Creation and Default Initialization
 
-After the model is updated:
+Once parsing is successful, `Parser.createApplication()` instantiates a new `Application` object with the extracted data.
 
-```
-Storage.saveApplications(userApplications)
-```
-
-This method:
-
-1. Opens `./data/applications.txt`
-2. Iterates through the application list
-3. Serializes each entry into pipe-delimited format
-
-Example format:
-
-```
-company|role|deadline|contact|status
-```
+Critically, the `Application` constructor automatically assigns a default status of "Pending" to all newly created applications. This ensures every new application has a well-defined initial state.
 
 ---
 
-## Step 5: User Feedback
+### Step 3: Model Update
 
-`Ui.printAddApplication()` displays confirmation to the user including:
+The newly created `Application` object is returned to `ApplicationList.addApplications()`, which performs final validation:
 
-- application details
-- updated application count
-
----
-
-## Sequence Diagram: Add Command
-
-![add_sequence_diag.png](diagrams/add_sequence_diag.png)
+* Adds the application to the internal `userApplications` ArrayList
+* Returns the newly added `Application`
 
 ---
 
-# Implementation of Edit Feature
+### Step 4: Storage Persistence
+
+Immediately after the successful model update, `InternTrack.handleAddCommand()` calls `Storage.saveApplications(userApplications)` to persist the updated list to disk.
+
+This ensures in-memory and on-disk states remain synchronized.
+
+The `Storage.saveApplications()` method:
+
+1. Opens a `FileWriter` to `./data/applications.txt`
+2. Iterates through all applications in the list
+3. Converts each `Application` to a pipe-delimited string:
+   `company|role|deadline|contact|status`
+4. Writes all serialized applications to disk in a single operation
+5. Null fields are represented as the string `"null"`
+
+---
+
+### Step 5: User Feedback
+
+Finally, `Ui.printAddApplication()` displays a confirmation message showing the added application details and the updated total count.
+
+---
+
+### Sequence Diagram illustrating the 5 steps above
+
+![add\_sequence\_diag.png](diagrams/add_sequence_diag.png)
+
+---
+
+## Implementation of Edit Feature
 
 The `edit` command allows users to modify the status of an existing application.
 
 Command format:
 
-```
 edit INDEX s/STATUS
-```
 
 Example:
 
-```
 edit 2 s/Accepted
-```
 
 Implementation steps:
 
@@ -194,27 +140,27 @@ This approach keeps validation within the model while command interpretation rem
 
 ---
 
-## Sequence Diagram: Edit Command
+### Sequence Diagram: Edit Command
 
-![edit_sequence_diag.png](diagrams/edit_sequence_diag.png)
+![edit\_sequence\_diag.png](diagrams/edit_sequence_diag.png)
 
 ---
 
-# Implementation of Undo Feature
+## Implementation of Undo Feature
 
 The `undo` command allows users to revert the most recent modification made to the application list.
 
 Supported commands:
 
-- add
-- edit
-- delete
+* add
+* edit
+* delete
 
-Undo is implemented using a **snapshot-based state restoration mechanism**.
+Undo is implemented using a snapshot-based state restoration mechanism.
 
 ---
 
-## Snapshot Mechanism
+### Snapshot Mechanism
 
 Before executing any modifying command:
 
@@ -231,15 +177,11 @@ This guarantees the system returns to the exact state before the most recent cha
 
 ---
 
-## Example Workflow
+### Example Workflow
 
-Command sequence:
-
-```
 add c/Google r/SWE Intern
 delete 1
 undo
-```
 
 Execution flow:
 
@@ -251,242 +193,157 @@ The deleted application reappears in the list.
 
 ---
 
-## Sequence Diagram: Undo Command
+### Sequence Diagram: Undo Command
 
-![undo_sequence_diag.png](diagrams/undo_sequence_diag.png)
+![undo\_sequence\_diag.png](diagrams/undo_sequence_diag.png)
 
 ---
 
-# Design Considerations
+## Design Considerations
 
-## Aspect 1: Application Instantiation
+### Aspect 1: Where the Application Object is Instantiated
 
-**Current Approach**
-
-Application objects are created inside the parser.
+**Alternative 1 (Current Choice):** Instantiate the complete `Application` object inside the `Parser.createApplication()` method.
 
 Pros:
 
-- clear separation between parsing and model logic
-- centralized validation
-- improved maintainability
+* Parsing logic is centralized and reusable across commands
+* `ApplicationList` is insulated from parsing concerns; it only knows about domain objects
+* Clear separation of concerns between input parsing and model management
+* Validation happens at a single point, reducing the risk of inconsistency
 
 Cons:
 
-- parser depends on the application structure
+* Parser is tightly coupled to the `Application` class structure
+* Changes to the `Application` constructor signature require updating the parser
+* If multiple ways to create `Application` objects are needed, code duplication may occur
 
-Alternative approach: create objects inside the model layer.
-
-This was rejected because it mixes parsing logic with model responsibilities.
-
----
-
-## Aspect 2: Storage Persistence
-
-**Current Approach**
-
-Automatically save after every modifying command.
+**Alternative 2:** Instantiate inside model layer.
 
 Pros:
 
-- prevents data loss
-- ensures consistent state
+* Reduces coupling between parser and model
+* Gives model more control over object creation
 
 Cons:
 
-- slightly increased disk I/O
+* Violates Single Responsibility Principle
+* Duplicates validation logic
+* Harder testing
+* Reduced reusability
 
-Alternative approach: manual save command.
-
-Rejected due to high risk of losing data.
+**Rationale:** Centralizing instantiation in parser improves maintainability and consistency.
 
 ---
 
-## Aspect 3: Storage Format
+### Aspect 2: When to Persist Data to Storage
 
-**Current Approach**
-
-Pipe-delimited text format.
+**Alternative 1 (Current Choice):** Auto-save after every command.
 
 Pros:
 
-- human readable
-- no external dependencies
-- simple implementation
+* Prevents data loss
+* Guarantees consistency
+* Simplifies error handling
+* No user dependency
 
 Cons:
 
-- limited scalability
+* Increased disk I/O
+* Less efficient for batch operations
+* Slight latency
 
-Alternative options considered:
-
-- JSON
-- database storage
-
-These options introduce unnecessary complexity for a small CLI application.
-
----
-
-## Aspect 4: Undo Implementation
-
-Two approaches were evaluated.
-
-### Snapshot-based restoration (current approach)
+**Alternative 2:** Manual save.
 
 Pros:
 
-- simple and reliable
-- independent of specific command logic
-- guarantees correct state restoration
+* Better performance
+* User-controlled
 
 Cons:
 
-- increased memory usage due to storing copies
+* High risk of data loss
+* User burden
+* Inconsistent state
 
-### Command-based reversal
+**Rationale:** Data safety outweighs performance cost.
+
+---
+
+### Aspect 3: File Format for Persistent Storage
+
+**Alternative 1 (Current Choice):** Pipe-delimited format.
 
 Pros:
 
-- more memory efficient
+* Human-readable
+* No dependencies
+* Simple logic
+* Fast I/O
+* Small file size
 
 Cons:
 
-- significantly more complex
-- each command requires custom undo logic
+* Not scalable
+* Delimiter conflicts
+* Fragile format
 
-Given the relatively small number of applications expected, the snapshot approach was chosen for simplicity and reliability.
+**Alternative 2:** JSON
 
----
+Pros:
 
-# Product Scope
+* Structured
+* Extensible
+* Standard format
 
-## Target User Profile
+Cons:
 
-InternTrack targets students applying to multiple internships who want a simple command-line tool to track applications.
+* Requires libraries
+* Larger size
+* Overkill
 
-Typical users:
+**Alternative 3:** Database
 
-- university students
-- CLI-comfortable users
-- applicants managing multiple internship submissions
+Pros:
 
----
+* Scalable
+* Powerful queries
 
-## Value Proposition
+Cons:
 
-InternTrack provides a lightweight alternative to spreadsheets or notes.
+* Complex
+* Heavy
+* Overkill
 
-Users can:
-
-- record applications quickly
-- track progress
-- filter and organize entries
-
-All through fast CLI commands.
-
----
-
-# User Stories
-
-| Version | As a... | I want to... | So that I can... |
-|--------|--------|--------|--------|
-| v1.0 | Year-2 student applying for internships | add a new application | keep all applications in one place |
-| v1.0 | Forgetful applicant | record deadlines | avoid missing closing dates |
-| v1.0 | Student mass-applying during peak season | list applications | see what I applied for |
-| v1.0 | Student mass-applying during peak season | delete applications | remove outdated entries |
-| v1.0 | Applicant networking with recruiters | add recruiter contact | follow up with the correct person |
-| v1.0 | Applicant tracking progress | update application status | track interview progress |
-| v1.0 | Applicant mass-applying during peak season | filter applications | view applications by status |
-| v2.0 | Organized student | sort applications | organize applications based on criteria |
-| v2.0 | Error-prone student | undo commands | recover from accidental mistakes |
+**Rationale:** Pipe format is sufficient for current scope.
 
 ---
 
-# Non-Functional Requirements
+### Aspect 4: Undo Implementation
 
-1. The application must run on systems supporting Java 17 or above.
-2. Application data should be stored locally in a text file.
-3. Commands should execute within one second under typical usage.
-4. The system must display clear error messages for invalid input.
-5. The application should support full command-line operation without a graphical interface.
+**Alternative 1 (Current Choice): Snapshot-based restoration**
 
----
+Pros:
 
-# Glossary
+* Simple and reliable
+* Independent of command logic
+* Guarantees correct state restoration
 
-**Application** – An internship submission to a company.
+Cons:
 
-**Status** – The stage of an application (e.g., Pending, Interview, Accepted).
+* Increased memory usage
 
-**CLI** – Command Line Interface.
+**Alternative 2: Command-based reversal**
 
----
+Pros:
 
-# Instructions for Manual Testing
+* More memory efficient
 
-## Launching the application
+Cons:
 
-Run:
+* Significantly more complex
+* Each command requires custom undo logic
 
-```
-java -jar InternTrack.jar
-```
+**Rationale:** Snapshot approach chosen for simplicity and reliability.
 
 ---
-
-## Add an application
-
-```
-add c/Google r/SWE Intern
-```
-
-Expected result:  
-Application is added with status `Pending`.
-
----
-
-## Edit an application
-
-```
-edit 1 s/Interview
-```
-
-Expected result:  
-Application 1 status becomes `Interview`.
-
----
-
-## Delete an application
-
-```
-delete 1
-```
-
-Expected result:  
-Application 1 is removed.
-
----
-
-## Undo command
-
-Command sequence:
-
-```
-add c/Meta r/ML Intern
-delete 1
-undo
-```
-
-Expected result:  
-The deleted application is restored.
-
----
-
-## Undo when no history exists
-
-```
-undo
-```
-
-Expected result:  
-The system displays a message indicating that there is no command to undo.
