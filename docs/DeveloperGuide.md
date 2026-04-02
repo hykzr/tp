@@ -99,13 +99,94 @@ This decoupling ensures that the data storage remains independent of the process
 
 ### Storage component
 
-#### Overview
+**API**: [`Storage.java`](https://github.com/AY2526S2-CS2113-W10-1/tp/blob/master/src/main/java/seedu/interntrack/Storage.java)
 
-The `Storage` component is responsible for persisting application data to disk and loading it back into memory during startup. This component bridges the gap between the in-memory model and the file system, ensuring data durability and consistency.
+#### Class Diagram
+
+The following diagram illustrates the `Storage` component and its relationships:
+
+![storage_class_diag.png](diagrams/storage_class_diag.png)
+
+#### What the Storage Component Does
+
+The `Storage` component handles persistence of application data through the following responsibilities:
+
+- **Loads** application data from `./data/applications.txt` on application startup and deserializes each line into an `Application` object.
+- **Saves** the full list of `Application` objects back to disk after every modifying command (add, edit, delete).
+- **Depends on** the `Application` class.  It directly serializes and deserializes `Application` objects using a pipe-delimited format.
+- **Handles gracefully** missing files and directories by creating them automatically on first run.
+- **Skips and logs** malformed or unparseable records rather than crashing, ensuring robustness against corrupted data.
+- **Uses** Java's `FileWriter` and `Scanner` classes for I/O operations and `LocalDate` for date parsing.
+
+---
+
+#### File Format Specification
+
+The data file (`./data/applications.txt`) stores applications in a pipe-delimited format. Each line represents one application with exactly 5 fields:
+
+| Field      | Index | Format              | Example                | Notes                        |
+|------------|-------|---------------------|------------------------|------------------------------|
+| Company    | 0     | Plain text          | `Google`               | Mandatory, non-empty         |
+| Role       | 1     | Plain text          | `SWE Intern`           | Mandatory, non-empty         |
+| Deadline   | 2     | ISO-8601 date       | `2025-08-01`           | Optional; `null` if not set  |
+| Contact    | 3     | Plain text (email)  | `john.doe@google.com`  | Optional; `null` if not set  |
+| Status     | 4     | Predefined enum     | `Applied`              | Mandatory; default is `Pending` |
+
+**Example line:**
+```
+Google|SWE Intern|2025-08-01|john.doe@google.com|Applied
+```
+
+**Example with null fields:**
+```
+Microsoft|Azure Developer|null|contact.unknown@microsoft.com|Pending
+```
+
+---
+
+#### Save Operation Sequence
+
+**Key steps:**
+1. User enters an add command
+2. `InternTrack` creates a new `Application` and adds it to the list
+3. `Storage.saveApplications()` is called immediately
+4. All applications are converted to pipe-delimited format via `applicationToFileFormat()`
+5. The entire list is written to `./data/applications.txt` in a single file operation
+
+---
+
+#### Load Operation Sequence
+
+**Key steps:**
+1. `InternTrack.main()` initializes an empty application list
+2. `Storage.loadApplications()` is called
+3. If the file/directory doesn't exist, they are created automatically
+4. Each line is read and parsed via `parseFileString()`
+5. Valid applications are added to the in-memory list
+6. Malformed lines are logged and skipped
+
+---
+
+#### Error Handling and Corrupted Data
+
+The `Storage` component is designed to be resilient:
+
+| Scenario | Behavior |
+|----------|----------|
+| Data directory missing | Created automatically at `./data/` |
+| Applications file missing | Created automatically as empty file |
+| Line has wrong number of fields | Line is skipped; warning logged to console |
+| Deadline field is unparseable | Line is skipped; exception logged; application not added |
+| Status field is invalid/blank | Line is skipped; validation ensures consistency |
+| Entire file is corrupted | Application starts with empty list; user can add data fresh |
+
+This design prioritizes **data integrity** and **user safety** over strict parsing — the application will never crash due to a corrupted data file, but will alert the user to problems via logging.
+
+---
 
 #### Design Considerations
 
-##### Aspect 2: When to Persist Data to Storage
+##### Aspect 1: When to Persist Data to Storage
 
 **Alternative 1 (Current Choice):** Auto-save to `Storage` immediately after every successful command that modifies the model (add, edit, delete).
 
@@ -137,7 +218,7 @@ The `Storage` component is responsible for persisting application data to disk a
 
 ---
 
-##### Aspect 3: File Format for Persistent Storage
+##### Aspect 2: File Format for Persistent Storage
 
 **Alternative 1 (Current Choice):** Store applications in a plain-text file using a pipe-delimiter (`|`) format.
 
@@ -281,7 +362,7 @@ ensures:
 
 ### Add feature
 
-#### Proposed Implementation
+#### Implementation
 
 The add command follows a 5-step pipeline:
 
@@ -411,7 +492,77 @@ This approach keeps validation within the model while command interpretation rem
 
 ### Remind feature
 
-{Description of Remind feature implementation will be added here.}
+####  Implementation
+
+The `remind` command helps users stay on top of upcoming application deadlines by displaying all applications with deadlines within N days from today (default: 7 days).
+
+The remind feature is facilitated by the following key components:
+
+- **Parser** (`Parser#parseRemindDays()`) — Parses and validates the number of days from user input
+- **ApplicationList** (`ApplicationList#filterApplicationsOnOrBefore()`) — Filters applications by deadline
+- **Ui** (`Ui#printUpcomingDeadlines()`) — Displays the filtered applications
+- **InternTrack** (`InternTrack#handleRemindCommand()`) — Orchestrates the remind command workflow
+
+#### How the Remind Feature Works
+
+Given below is an example usage scenario and how the remind feature behaves:
+
+**Step 1:** User has 3 applications: Google (deadline Apr 3), Microsoft (deadline Apr 5), Amazon (deadline Apr 15). Today is Apr 1.
+
+**Step 2:** User executes `remind 5` to see applications due within the next 5 days.
+
+**Step 3:** `InternTrack#handleRemindCommand()` is invoked:
+1. Calls `Parser#parseRemindDays("remind 5")` which returns `5`
+2. Calculates cutoff date: `LocalDate.now().plusDays(5)` = Apr 6
+3. Calls `ApplicationList#filterApplicationsOnOrBefore(userApplications, Apr 6)` to filter the list
+4. For each application, checks: `if (deadline != null && !deadline.isAfter(Apr 6))` to include it
+5. Returns filtered list: Google (Apr 3) and Microsoft (Apr 5); excludes Amazon (Apr 15)
+
+**Step 4:** `Ui#printUpcomingDeadlines()` displays the result:
+```
+You have 2 applications due in the next 5 days (up to 2026-04-06):
+1. Software Engineer at Google is Pending. Apply by 2026-04-03.
+2. Data Analyst at Microsoft is Pending. Apply by 2026-04-05.
+```
+
+#### Error Handling
+
+The `Parser#parseRemindDays()` method validates input and handles error cases:
+
+| Error Case | Behavior |
+|---|---|
+| Days parameter ≤ 0 | `InternTrackException` thrown with message: "Number of days must be greater than 0." |
+| Non-integer parameter | `InternTrackException` thrown with message: "Days must be a valid number. Use format: remind [DAYS]" |
+| No parameter provided | Defaults to 7 days without exception |
+| No applications match deadline criteria | `Ui#printUpcomingDeadlines()` displays: "No applications due in the next N days." |
+
+#### Design Considerations
+
+**Aspect: Default Behavior**
+
+*Alternative 1 (current choice): Default to 7 days if no parameter provided*
+- Pros: Convenient for the most common use case (weekly planning); reduces typing
+- Cons: Users may not expect the default
+
+*Alternative 2: Require explicit days parameter*
+- Pros: Forces explicit intent; clearer semantics
+- Cons: Less convenient; more typing required
+
+**Rationale**: Weekly planning is the most natural checking interval for internship deadlines. The default of 7 days balances convenience with clarity.
+
+---
+
+**Aspect: Deadline Cutoff Inclusivity**
+
+*Alternative 1 (current choice): Include deadlines "on or before" the cutoff date (inclusive)*
+- Pros: Aligns with user expectation ("what do I need to do by then?"); safer approach
+- Cons: May include applications that are already overdue
+
+*Alternative 2: Exclude applications on the cutoff date (exclusive)*
+- Pros: Avoids including the boundary date itself
+- Cons: Users could miss deadline applications on the cutoff date if they misinterpret
+
+**Rationale**: It is safer to over-remind than under-remind. Missing a deadline is worse than showing one extra application.
 
 ---
 
@@ -606,5 +757,110 @@ interface.
 
 ### Saving data
 
-{Instructions for saving data will be added here.}
+**Prerequisite**: The application is running and has data loaded from previous sessions.
+
+#### Test Case 1: Auto-save After Add Command
+
+1. Run the application
+2. Add a new application: `add c/Google r/SWE Intern d/2025-08-01 ct/john@google.com`
+3. Verify the application appears in the list
+4. **Without closing the app**, navigate to `./data/applications.txt`
+5. **Expected**: The file contains a new line with the added application in the format: `Google|SWE Intern|2025-08-01|john@google.com|Pending`
+
+#### Test Case 2: Auto-save After Edit Command
+
+1. Run the application with existing data
+2. Edit an application: `edit 1 s/Accepted`
+3. Verify the status has changed in the display
+4. **Without closing the app**, open `./data/applications.txt`
+5. **Expected**: The first application line now has `Accepted` as the last field instead of `Pending`
+
+#### Test Case 3: Auto-save After Delete Command
+
+1. Run the application with at least 2 applications
+2. Delete an application: `delete 1`
+3. Verify it's removed from the list
+4. **Without closing the app**, open `./data/applications.txt`
+5. **Expected**: The file now has one fewer line (the deleted application is gone)
+
+#### Test Case 4: Persistence Across Sessions
+
+1. Run the application and add 2 applications:
+   - `add c/Google r/SWE Intern`
+   - `add c/Microsoft r/Azure Developer`
+2. Verify both appear in the list
+3. **Close the application** (via `exit` command)
+4. **Reopen the application**
+5. **Expected**: Both applications reappear in the list; data persisted correctly
+
+---
+
+#### Error Handling: Corrupted Data
+
+**Scenario 1: Missing Data Directory**
+
+1. Delete the `./data/` directory entirely
+2. Run the application
+3. **Expected**: 
+   - Directory is recreated automatically
+   - `applications.txt` is created as an empty file
+   - Application starts with an empty list (no crash)
+   - Console log shows: `INFO: Created data directory: ...`
+
+---
+
+**Scenario 2: Missing Applications File**
+
+1. Delete `./data/applications.txt` (but keep the `./data/` directory)
+2. Run the application
+3. **Expected**: 
+   - File is recreated automatically
+   - Application starts with an empty list
+   - Console log shows: `INFO: Created new applications file: ./data/applications.txt`
+
+---
+
+**Scenario 3: Malformed Line (Wrong Number of Fields)**
+
+1. Manually edit `./data/applications.txt` and add a corrupted line: `Google|SWE Intern|2025-08-01`
+   (only 3 fields instead of 5)
+2. Run the application
+3. **Expected**: 
+   - Application starts successfully with other valid data
+   - Malformed line is skipped
+   - Console log shows: `WARNING: Skipping malformed application record: Google|SWE Intern|2025-08-01`
+
+---
+
+**Scenario 4: Unparseable Date Field**
+
+1. Manually edit `./data/applications.txt` and add a line with an invalid date: `Google|SWE Intern|NOT-A-DATE|john@google.com|Pending`
+2. Run the application
+3. **Expected**: 
+   - Application starts successfully
+   - Line with invalid date is skipped
+   - Console log shows: `WARNING: Skipping invalid application record: ...`
+
+---
+
+**Scenario 5: Null/Missing Optional Fields**
+
+1. Manually add a line with optional fields as `null`: `Google|SWE Intern|null|null|Pending`
+2. Run the application
+3. **Expected**: 
+   - Application loads successfully
+   - Application is displayed correctly with no deadline and no contact information
+
+---
+
+**Scenario 6: Completely Corrupted File**
+
+1. Replace the entire contents of `./data/applications.txt` with random text (e.g., "CORRUPTED DATA 12345")
+2. Run the application
+3. **Expected**: 
+   - Application starts with an empty list (no crash)
+   - All corrupted lines are skipped with warnings
+   - User can continue using the application and add new data
+
+---
 
