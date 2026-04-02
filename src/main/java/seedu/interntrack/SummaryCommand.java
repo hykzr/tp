@@ -15,7 +15,7 @@ public class SummaryCommand {
     /**
      * Generates and displays a summary including total counts,
      * status breakdowns, and upcoming deadlines.
-     * * @param userApplications The current list of applications.
+     @param userApplications The current list of applications.
      */
     public static void execute(ArrayList<Application> userApplications) {
         if (userApplications.isEmpty()) {
@@ -78,7 +78,8 @@ public class SummaryCommand {
 
             if (deadline != null && !deadline.isBefore(today) && !deadline.isAfter(cutoffDate)) {
                 long daysUntil = ChronoUnit.DAYS.between(today, deadline);
-                System.out.println(" - " + app.getCompany() + " (" + app.getRole() + ") : Due in " + daysUntil + " days.");
+                System.out.println(" - " + app.getCompany() + " (" + app.getRole() + ") : Due in "
+                        + daysUntil + " days.");
                 foundDeadlines = true;
             }
         }
