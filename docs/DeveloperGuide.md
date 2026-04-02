@@ -74,8 +74,7 @@ java -jar InternTrack.jar
 
 ![architecture\_diag.png](diagrams/architecture_diag.png)
 
-The ***Architecture Diagram*** given above explains the high-level design of the App. The architecture of **InternTrack
-** follows a layered design pattern with the following main components:
+The ***Architecture Diagram*** given above explains the high-level design of the App. The architecture of **InternTrack** follows a layered design pattern with the following main components:
 
 * InternTrack: Responsible for the app's lifecycle. It initializes components in the correct sequence at launch and
   ensures a clean shutdown by invoking necessary cleanup methods. It also orchestrates the application flow.
