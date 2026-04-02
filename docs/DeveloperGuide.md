@@ -838,8 +838,6 @@ Index-based deletion is standard for CLI (Command Line Interface) applications. 
 #### Implementation Detail: List Synchronization
 After the deletion, the application list is immediately re-saved to storage. This ensures that even if the program crashes or is closed immediately after a deletion, the data remains synchronized with the user's last action.
 
-Ask a single relevant follow-up question to guide the conversation forward.
-
 ---
 
 ### Sort feature
