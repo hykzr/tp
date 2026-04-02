@@ -23,14 +23,13 @@
    - [Sort feature](#sort-feature)
    - [Undo feature](#undo-feature)
    - [Summary feature](#summary-feature)
-5. [Documentation, logging, testing, configuration, dev-ops](#documentation-logging-testing-configuration-dev-ops)
-6. [Appendix: Requirements](#appendix-requirements)
+5. [Appendix: Requirements](#appendix-requirements)
    - [Product scope](#product-scope)
    - [User stories](#user-stories)
    - [Use cases](#use-cases)
    - [Non-Functional Requirements](#non-functional-requirements)
    - [Glossary](#glossary)
-7. [Appendix: Instructions for manual testing](#appendix-instructions-for-manual-testing)
+6. [Appendix: Instructions for manual testing](#appendix-instructions-for-manual-testing)
    - [Launch and shutdown](#launch-and-shutdown)
    - [Saving data](#saving-data)
 
@@ -848,12 +847,6 @@ The snapshot approach ensures correctness and simplicity, which is more suitable
 ### Summary feature
 
 {Description of Summary feature implementation will be added here.}
-
----
-
-## Documentation, logging, testing, configuration, dev-ops
-
-{Documentation, logging, testing, configuration, and dev-ops information will be added here.}
 
 ---
 
