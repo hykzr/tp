@@ -431,11 +431,13 @@ A default status simplifies the user experience and ensures consistency across a
 
 ![application\_list.png](diagrams/application_list_diag.png)
 
+The diagram intentionally focuses on the static method of the ApplicationList that are exposed to be used by other components and show its dependency only, the method of common utility classes are not shown for clarity.
+
 The ApplicationList component is a stateless utility class that functions as a logic middleware. 
 
 It does not maintain its own state or store the application data internally; instead, it provides a suite of pure functions that perform operations (adding, filtering, sorting, editing) on an ArrayList<Application> passed in by the caller. 
 
-This decoupling ensures that the data storage remains independent of the processing logic.
+This decoupling ensures that the data storage remains independent of the processing logic. 
 
 ---
 
