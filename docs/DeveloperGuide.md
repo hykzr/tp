@@ -208,26 +208,49 @@ Microsoft|Azure Developer|null|contact.unknown@microsoft.com|Pending
 
 ---
 
-#### Save Operation Sequence
+#### Data Flow: Initialization and Persistence
 
-**Key steps:**
-1. User enters an add command
-2. `InternTrack` creates a new `Application` and adds it to the list
-3. `Storage.saveApplications()` is called immediately
-4. All applications are converted to pipe-delimited format via `applicationToFileFormat()`
-5. The entire list is written to `./data/applications.txt` in a single file operation
+When the application starts, `InternTrack` must first restore the user's previous state. Then, as the user performs actions, any modifications are immediately persisted to disk.
 
----
+##### Load Operation: Application Startup
 
-#### Load Operation Sequence
+When `InternTrack.main()` runs, the very first step is to load existing application data from disk:
 
-**Key steps:**
-1. `InternTrack.main()` initializes an empty application list
-2. `Storage.loadApplications()` is called
-3. If the file/directory doesn't exist, they are created automatically
-4. Each line is read and parsed via `parseFileString()`
+1. An empty `ArrayList<Application>` is initialized in memory
+2. `Storage.loadApplications()` is called to restore saved data
+3. The method checks if the `./data/` directory and `./data/applications.txt` file exist; if not, they are created automatically
+4. Each non-empty line in the file is parsed via `parseFileString()`, which:
+   - Splits the line using the pipe delimiter (`|`)
+   - Validates that exactly 5 fields are present and correctly formatted
+   - Creates an `Application` object with the parsed values
 5. Valid applications are added to the in-memory list
-6. Malformed lines are logged and skipped
+6. Malformed or unparseable lines are logged as warnings and skipped, ensuring the application never crashes due to corrupted data
+
+The following sequence diagram illustrates this process:
+
+![load_sequence_diag.png](diagrams/load_sequence_diag.png)
+
+This approach ensures that users' data is always available when the application starts, and any corrupted entries are handled gracefully without preventing the application from loading successfully.
+
+##### Save Operation: After User Actions
+
+Once the application is running and the user performs an action that modifies the application list (such as `add`, `edit`, or `delete`), the changes must be persisted to disk immediately:
+
+1. The user enters a command (e.g., `add c/Google r/SWE Intern`)
+2. The `Parser` validates and parses the command
+3. `InternTrack` creates a new `Application` object and adds it to the in-memory list
+4. `Storage.saveApplications()` is called immediately to persist the change
+5. Inside `saveApplications()`:
+   - A `StringBuilder` accumulates the string representation of all applications
+   - Each application is converted to pipe-delimited format via `applicationToFileFormat()`, which concatenates the five fields (company, role, deadline, contact, status) separated by the `|` delimiter
+   - The entire accumulated string is written to `./data/applications.txt` in a single atomic file operation
+   - On successful write, an informational log message is recorded
+
+The following sequence diagram illustrates the save operation:
+
+![saveApplications_sequence-saveApplications_Sequence_Diagram.png](diagrams/saveApplications_sequence-saveApplications_Sequence_Diagram.png)
+
+By saving immediately after every modifying operation, the application guarantees that the on-disk state always matches the in-memory state, preventing data loss in the event of a crash or unexpected termination.
 
 ---
 
