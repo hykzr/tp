@@ -7,10 +7,10 @@ hide circle
 hide stereotype
 
 class Storage {
-  - {static} FILE_PATH : String = "./data/applications.txt"
-  - {static} FILE_DELIMITER : String = "|"
-  - {static} FILE_DELIMITER_REGEX : String = "\\|"
-  - {static} NULL_STRING : String = "null"
+  - {static} FILE_PATH : String
+  - {static} FILE_DELIMITER : String
+  - {static} FILE_DELIMITER_REGEX : String
+  - {static} NULL_STRING : String
   - {static} logger : Logger
   --
   + {static} loadApplications(userApplications : ArrayList) : void
@@ -27,6 +27,6 @@ class Application {
   - status : String
 }
 
-Storage ..> Application :> creates
+Storage ..> Application
 
 @enduml

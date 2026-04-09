@@ -7,17 +7,17 @@ participant ":Parser" as Parser
 participant ":Ui" as Ui
 participant ":Storage" as Storage
 
-[-> InternTrack : handleAddCommand(line, userApplications)
+[-> InternTrack : handleAddCommand()
 activate InternTrack
 
-InternTrack -> ApplicationList : addApplications(userApplications, line)
+InternTrack -> ApplicationList : addApplications()
 activate ApplicationList
 
-ApplicationList -> Parser : createApplication(line)
+ApplicationList -> Parser : createApplication()
 activate Parser
 
 create "newApplication:Application" as Application
-Parser -> Application : Application(company, role, deadline, contact)
+Parser -> Application : Application()
 activate Application
 Application --> Parser ::Application
 deactivate Application
@@ -28,12 +28,12 @@ deactivate Parser
 ApplicationList --> InternTrack : newApplication:Application
 deactivate ApplicationList
 
-InternTrack -> Ui : printAddApplication(newApplication, userApplications)
+InternTrack -> Ui : printAddApplication()
 activate Ui
 Ui --> InternTrack
 deactivate Ui
 
-InternTrack -> Storage : saveApplications(userApplications)
+InternTrack -> Storage : saveApplications()
 activate Storage
 Storage --> InternTrack
 deactivate Storage
