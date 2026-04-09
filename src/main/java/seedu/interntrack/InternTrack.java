@@ -108,8 +108,7 @@ public class InternTrack {
                                          Stack<ArrayList<Application>> undoHistory)
             throws InternTrackException {
         logger.log(Level.INFO, "Processing ADD command");
-
-        Application newApplication = Parser.createApplication(line);
+        Application newApplication = ApplicationList.addApplications(userApplications, line);
         saveStateForUndo(userApplications, undoHistory);
 
         int sizeBefore = userApplications.size();
