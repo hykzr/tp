@@ -110,13 +110,6 @@ public class InternTrack {
         logger.log(Level.INFO, "Processing ADD command");
         Application newApplication = ApplicationList.addApplications(userApplications, line);
         saveStateForUndo(userApplications, undoHistory);
-
-        int sizeBefore = userApplications.size();
-        userApplications.add(newApplication);
-
-        assert userApplications.size() == sizeBefore + 1
-                : "List size should increment after a successful add";
-
         logger.log(Level.INFO, "Successfully added application: "
                 + newApplication.getCompany() + " - " + newApplication.getRole());
         Ui.printAddApplication(newApplication, userApplications);

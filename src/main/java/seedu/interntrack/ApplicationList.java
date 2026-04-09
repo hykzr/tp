@@ -26,7 +26,10 @@ public class ApplicationList {
                 "Application company should be valid after creation";
         assert newApplication.getRole() != null && !newApplication.getRole().isEmpty() :
                 "Application role should be valid after creation";
+        int sizeBefore = userApplications.size();
         userApplications.add(newApplication);
+        assert userApplications.size() == sizeBefore + 1
+                : "List size should increment after a successful add";
         logger.log(Level.INFO, "Added new application to list. Total applications: " + userApplications.size());
         return newApplication;
     }
