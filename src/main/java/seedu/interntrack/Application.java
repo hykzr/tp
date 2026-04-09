@@ -13,6 +13,7 @@ public class Application {
     private LocalDate deadline;
     private String contact;
     private String status;
+    private boolean isArchived;
 
     /**
      * Initialises a new application with the specified details.
@@ -29,6 +30,7 @@ public class Application {
         this.deadline = deadline;
         this.contact = contact;
         this.status = DEFAULT_STATUS;
+        this.isArchived = false;
         // Assertion to verify default status postcondition
         assert this.status.equals(DEFAULT_STATUS) : "New applications must start with Pending status";
     }
@@ -44,6 +46,7 @@ public class Application {
         this.deadline = other.deadline;
         this.contact = other.contact;
         this.status = other.status;
+        this.isArchived = other.isArchived;
     }
 
     /**
@@ -89,6 +92,15 @@ public class Application {
      */
     public String getStatus() {
         return status;
+    }
+
+    /**
+     * Returns whether this application is archived.
+     *
+     * @return true if archived, false otherwise.
+     */
+    public boolean isArchived() {
+        return isArchived;
     }
 
     /**
@@ -155,11 +167,22 @@ public class Application {
         assert !this.status.isBlank() : "Application status should not be blank after setting";
     }
 
+    /**
+     * Sets whether this application is archived.
+     * Archived applications remain in storage but are excluded from active views.
+     *
+     * @param isArchived The new archived state.
+     */
+    public void setArchived(boolean isArchived) {
+        this.isArchived = isArchived;
+    }
+
     @Override
     public String toString() {
+        String archiveLabel = isArchived ? "[Archived] " : "";
         String tempDeadline = (deadline != null) ? "Deadline: " + deadline + ", " : "";
         String tempContact = (contact != null) ? "Contact: " + contact + ", " : "";
-        return company + " - " + role
+        return archiveLabel + company + " - " + role
                 + " (" + tempDeadline + tempContact + "Status: " + status + ")";
     }
 }

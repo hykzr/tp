@@ -328,6 +328,8 @@ Supported commands
 - `add`
 - `edit`
 - `delete`
+- `archive`
+- `unarchive`
 
 Format
 
@@ -382,8 +384,119 @@ Upcoming Deadlines (Next 7 days):
  - Amazon (Fullstack Developer) : Due in 4 days.
 ____________________________________________________________
 ```
+## 10. Archive an application: `archive`
 
-## 10. Exit the application: `bye`
+Marks an application as archived without deleting it from the tracker.
+
+Archived applications remain stored, but can be separated from active applications for better organisation.
+
+Format
+
+```
+archive INDEX
+```
+
+Parameters
+
+- `INDEX` : Index of the application in the list
+
+Example
+
+```
+archive 2
+```
+
+Result
+
+Archives application 2.
+
+**Example output:**
+
+```
+Nice! I've archived application 2:
+[Archived] Meta - Data Analyst (Deadline: 2026-05-25, Contact: Bob, Status: Pending)
+```
+
+### Notes
+
+- The application index must be greater than 0.
+- The application must exist in the list.
+- An already archived application cannot be archived again.
+
+---
+
+## 11. Restore an archived application: `unarchive`
+
+Restores an archived application back to its active state.
+
+ Format
+
+```
+unarchive INDEX
+```
+ 
+Parameters
+
+- `INDEX` : Index of the application in the list
+
+ Example
+
+```
+unarchive 2
+```
+
+ Result
+
+Restores application 2.
+
+**Example output:**
+
+```
+Nice! I've restored application 2:
+Meta - Data Analyst (Deadline: 2026-05-25, Contact: Bob, Status: Pending)
+```
+
+ Notes
+
+- The application index must be greater than 0.
+- The application must exist in the list.
+- The application must already be archived.
+
+---
+
+## 12. View archived applications: `listarchived`
+
+Displays all archived applications currently stored in the tracker.
+
+ Format
+
+```
+listarchived
+```
+
+ Example
+
+```
+listarchived
+```
+
+ Result
+
+Shows all archived applications.
+
+**Example output:**
+
+```
+You have 1 archived application
+1. [Archived] Data Analyst at Meta is Pending. Apply by 2026-05-25. Contact with Bob.
+```
+
+If there are no archived applications:
+
+```
+You have no archived applications.
+```
+## 13. Exit the application: `bye`
 
 Closes InternTrack.
 
@@ -430,4 +543,9 @@ Undo history is cleared when the application restarts.
 | Sort | `sort by/CRITERIA [DESC] [NONNULL]` |
 | Undo | `undo` |
 | Summary | `summary` |
+| Archive | `archive INDEX` |
+| Unarchive | `unarchive INDEX` |
+| List archived | `listarchived` |
 | Exit | `bye` |
+
+* Archived applications are marked with `[Archived]` when displayed.
