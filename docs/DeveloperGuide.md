@@ -190,14 +190,14 @@ The `Storage` component handles persistence of application data through the foll
 
 The data file (`./data/applications.txt`) stores applications in a pipe-delimited format. Each line represents one application with exactly 6 fields:
 
-| Field      | Index | Format              | Example                | Notes                                 |
-|------------|-------|---------------------|------------------------|---------------------------------------|
-| Company    | 0     | Plain text          | `Google`               | Mandatory, non-empty                  |
-| Role       | 1     | Plain text          | `SWE Intern`           | Mandatory, non-empty                  |
-| Deadline   | 2     | ISO-8601 date       | `2025-08-01`           | Optional; `null` if not set           |
-| Contact    | 3     | Plain text (email)  | `john.doe@google.com`  | Optional; `null` if not set           |
-| Status     | 4     | Predefined enum     | `Applied`              | Mandatory; default is `Pending`       |
-| Archived   | 5     | Boolean             | `false`                | Indicates if application is archived  |
+| Field      | Index | Format          | Example                         | Notes                                 |
+|------------|-------|-----------------|---------------------------------|---------------------------------------|
+| Company    | 0     | Plain text      | `Google`                        | Mandatory, non-empty                  |
+| Role       | 1     | Plain text      | `SWE Intern`                    | Mandatory, non-empty                  |
+| Deadline   | 2     | ISO-8601 date   | `2025-08-01`                    | Optional; `null` if not set           |
+| Contact    | 3     | Plain text      | `john.doe@google.com` or `John` | Optional; `null` if not set           |
+| Status     | 4     | Predefined enum | `Applied`                       | Mandatory; default is `Pending`       |
+| Archived   | 5     | Boolean         | `false`                         | Indicates if application is archived  |
 
 **Example line:**
 ```
