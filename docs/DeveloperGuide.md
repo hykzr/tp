@@ -83,11 +83,11 @@ The ***Architecture Diagram*** given above explains the high-level design of the
 * InternTrack: Acts as the central coordinator of the application, handles the main application loop and command dispatching.
   Delegates tasks to other components such as Parser, ApplicationList, UI, and Storage.
 * UI (Ui): Responsible for all user interactions via the command line, reads user input and displays output messages, does not contain business logic.
-* Parser: Responsible for interpreting raw user input. Extracts command types and parameters (e.g., index, filters, fields) and return to InternTracker
+* Parser: Responsible for interpreting raw user input. Extracts command types and parameters (e.g., index, filters, fields) and return to InternTrack
 * Model (ApplicationList): ApplicationList contains and operates the core business logic
 * Storage (Storage): Manages persistence of application data to disk
 * Common : A suite of utility classes (i.e. Application,EditDetails, FilterCriteria) shared across all components. They are responsible for supporting communication between components
-  The sequence of interaction follows a clear flow: User input → UI → InternTracker → Parser/ApplicationList/Storage → UI
+  The sequence of interaction follows a clear flow: User input → UI → InternTrack → Parser/ApplicationList/Storage → UI
   persistence.
 
 The architecture could be divided into few layers as the graph above, which is the User-interaction, orchestrator, logic processing and disk storage.
