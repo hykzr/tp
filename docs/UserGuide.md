@@ -342,7 +342,7 @@ Sort applications by deadline in descending order.
 
 ## 8. Undo the most recent change: `undo`
 
-Reverts the most recent modifying command.
+Reverts the most recent modifying command. If previous there is no supported commands for undo, it will do nothing.
 
 Supported commands
 

@@ -906,6 +906,8 @@ This approach keeps validation within the model while command interpretation rem
 
 The `undo` command allows users to revert the most recent modification made to the application list.
 
+If previous there is no supported commands for undo, it will do nothing.
+
 Supported commands:
 - add
 - edit
