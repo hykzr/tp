@@ -178,16 +178,15 @@ public class ApplicationList {
             ArrayList<Application> userApplications, int numDays) {
         LocalDate today = LocalDate.now();
         LocalDate cutoffDate = today.plusDays(numDays);
-        ArrayList<Application> filteredApplications = filterApplicationsOnOrBefore(userApplications, cutoffDate);
-        
-        // Exclude past deadlines for the remind feature
-        ArrayList<Application> futureOnly = new ArrayList<>();
-        for (Application app : filteredApplications) {
-            if (app.getDeadline() != null && app.getDeadline().compareTo(today) >= 0) {
-                futureOnly.add(app);
+        ArrayList<Application> results = new ArrayList<>();
+
+        for (Application app : userApplications) {
+            if (isWithinDateRange(app, today, cutoffDate)) {
+                results.add(app);
             }
         }
-        return futureOnly;
+        logger.info("Retrieved " + results.size() + " reminders for the next " + numDays + " days.");
+        return results;
     }
 
     /**
@@ -487,6 +486,23 @@ public class ApplicationList {
         }
 
         return applicationValue.toLowerCase(Locale.ROOT).contains(criterionValue.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * Returns true if an application is active and its deadline falls within the specified range.
+     * Used by the Remind feature to determine which applications to display.
+     *
+     * @param app The application to check.
+     * @param start The start date (inclusive) of the range.
+     * @param end The end date (inclusive) of the range.
+     * @return True if the application is not archived and the deadline is within the range.
+     */
+    private static boolean isWithinDateRange(Application app, LocalDate start, LocalDate end) {
+        LocalDate deadline = app.getDeadline();
+        if (app.isArchived() || deadline == null) {
+            return false;
+        }
+        return !deadline.isBefore(start) && !deadline.isAfter(end);
     }
 
     /**
