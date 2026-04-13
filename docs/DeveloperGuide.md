@@ -103,7 +103,7 @@ The `UI` component handles the interaction between the user and the application.
 
 #### Class Diagram
 
-![UI_diag.png](diagrams/UI_diag.png)
+![UI_class_diag.png](diagrams/UI_class_diag.png)
 
 #### Design Considerations
 

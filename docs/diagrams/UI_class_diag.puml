@@ -6,11 +6,6 @@ hide circle
 hide stereotype
 
 class Ui {
-  - BORDER : String {static, final}
-  - GOODBYE_MESSAGE : String {static, final}
-  - UNKNOWN_COMMAND_MESSAGE : String {static, final}
-  - scanner : Scanner {static, final}
-
   + readCommand() : String {static}
   + hasMoreCommands() : boolean {static}
   + printBorder() : void {static}
@@ -21,15 +16,46 @@ class Ui {
   + printAllApplications(userApplications : ArrayList<Application>) : void {static}
   + printFilteredApplications(filteredApplications : ArrayList<Application>, criteria : FilterCriteria) : void {static}
   + printSortedApplications(sortedApplications : ArrayList<Application>, criterias : String[]) : void {static}
-  + printEditApplication(application : Application, index : int) : void {static}
+  + printEditApplication(application : Application, index : int, editDetails : EditDetails) : void {static}
   + printDeleteApplication(application : Application, index : int) : void {static}
   + printUndoSuccess() : void {static}
   + printUnknownCommand() : void {static}
   + printUpcomingDeadlines(upcomingApplications : ArrayList<Application>, numDays : int, remindDate : LocalDate) : void {static}
 }
 
+class Application {
+  - company : String
+  - role : String
+  - deadline : LocalDate
+  - contact : String
+  - status : String
+}
+
+class EditDetails {
+  - company : String
+  - role : String
+  - deadline : LocalDate
+  - contact : String
+  - status : String
+}
+
+class FilterCriteria {
+  - field : Field
+  - textValue : String
+  - deadlineValue : LocalDate
+}
+
+class Field <<enumeration>> {
+  COMPANY
+  ROLE
+  DEADLINE
+  CONTACT
+  STATUS
+}
+
+
 Ui --> Application
+Ui --> EditDetails
 Ui --> FilterCriteria
-Ui --> Scanner
-Ui --> LocalDate
+FilterCriteria-->Field
 @enduml

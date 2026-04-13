@@ -16,7 +16,7 @@ InternTrack -> ApplicationList : sortApplicationsByCriteria()
 activate ApplicationList
 ApplicationList --> InternTrack
 deactivate ApplicationList
-InternTrack -->Ui :printSortedApplications()
+InternTrack ->Ui :printSortedApplications()
 deactivate InternTrack
 Ui-->User
 @enduml

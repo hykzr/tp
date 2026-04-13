@@ -1,18 +1,23 @@
 @startuml
 actor User
-participant Ui
-participant InternTrack
-participant Parser
-participant SummaryCommand
+participant ":Ui" as Ui
+participant ":InternTrack" as InternTrack
+participant ":Parser" as Parser
+participant ":SummaryCommand" as SummaryCommand
 
 User -> Ui : summary
 Ui -> InternTrack : handleSummaryCommand()
+activate InternTrack
 InternTrack -> Parser : parseSummaryCommand()
-Parser -> InternTrack
+activate Parser
+Parser --> InternTrack
+deactivate Parser
 
 InternTrack -> SummaryCommand : execute(applications)
-SummaryCommand -> InternTrack
-
+activate SummaryCommand
+SummaryCommand --> InternTrack
+deactivate SummaryCommand
 InternTrack -> Ui : printSummaryReport()
-Ui -> User
+deactivate InternTrack
+Ui --> User
 @enduml
