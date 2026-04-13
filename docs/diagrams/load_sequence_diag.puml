@@ -1,8 +1,8 @@
 @startuml
 skinparam style strictuml
 
-participant ":InternTrack" as main
-participant ":Storage" as storage
+participant "InternTrack" as main <<class>>
+participant "Storage" as storage <<class>>
 participant "f:File" as file
 participant "s:Scanner" as scanner
 participant "userApplications:ArrayList" as list
@@ -10,7 +10,7 @@ participant "userApplications:ArrayList" as list
 main -> storage : loadApplications(userApplications)
 activate storage
 
-storage -> file ** : new File(FILE_PATH)
+storage -> file ** : File(FILE_PATH)
 activate file
 file --> storage : f
 deactivate file
@@ -24,7 +24,7 @@ alt file does not exist
     storage --> main : return
 end
 
-storage -> scanner ** : new Scanner(f)
+storage -> scanner ** : Scanner(f)
 activate scanner
 scanner --> storage : s
 

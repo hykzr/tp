@@ -1,11 +1,11 @@
 @startuml
 hide footbox
 
-participant ":InternTrack" as InternTrack
-participant ":ApplicationList" as ApplicationList
-participant ":Parser" as Parser
-participant ":Ui" as Ui
-participant ":Storage" as Storage
+participant "InternTrack" as InternTrack <<class>>
+participant "ApplicationList" as ApplicationList <<class>>
+participant "Parser" as Parser <<class>>
+participant "Ui" as Ui <<class>>
+participant "Storage" as Storage <<class>>
 
 [-> InternTrack : handleAddCommand()
 activate InternTrack

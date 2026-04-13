@@ -1,26 +1,22 @@
-@startuml saveApplications_sequence
-!theme plain
-hide footbox
-skinparam shadowing false
+@startuml
+skinparam style strictuml
 
-title saveApplications Sequence Diagram
-
-actor "Caller" as caller
-participant ":Storage" as Storage
+participant "InternTrack" as main <<class>>
+participant "Storage" as Storage <<class>>
 participant "fw:FileWriter" as FileWriter
 participant "sb:StringBuilder" as StringBuilder
 
-caller -> Storage : saveApplications(userApplications)
+main -> Storage : saveApplications(userApplications)
 activate Storage
 
 create FileWriter
-Storage -> FileWriter : new FileWriter(FILE_PATH)
+Storage -> FileWriter : FileWriter(FILE_PATH)
 activate FileWriter
 FileWriter --> Storage
 deactivate FileWriter
 
 create StringBuilder
-Storage -> StringBuilder : new StringBuilder()
+Storage -> StringBuilder : StringBuilder()
 activate StringBuilder
 StringBuilder --> Storage
 deactivate StringBuilder
@@ -62,7 +58,7 @@ activate FileWriter
 FileWriter --> Storage
 deactivate FileWriter
 
-Storage --> caller
+Storage --> main
 deactivate Storage
 
 @enduml
