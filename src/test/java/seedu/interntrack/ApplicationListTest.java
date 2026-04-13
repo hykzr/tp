@@ -467,4 +467,50 @@ public class ApplicationListTest {
             assertEquals(cutoffDate, app.getDeadline());
         }
     }
+
+    @Test
+    public void filterApplicationsByDaysAhead_pastDueApplication_excluded() throws InternTrackException {
+        ArrayList<Application> testList = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate pastDueDate = LocalDate.parse("2024-01-01");
+        LocalDate futureDate = today.plusDays(5);
+
+        // Add past-due application (multiple years old)
+        ApplicationList.addApplication(testList, "c/Google r/DevOps d/" + pastDueDate);
+        // Add future application for reference
+        ApplicationList.addApplication(testList, "c/Meta r/Backend d/" + futureDate);
+
+        // Test with different remind periods - past-due should never appear
+        ArrayList<Application> filteredRemind1 = ApplicationList.filterApplicationsByDaysAhead(testList, 1);
+        ArrayList<Application> filteredRemind5 = ApplicationList.filterApplicationsByDaysAhead(testList, 5);
+        ArrayList<Application> filteredRemind365 = ApplicationList.filterApplicationsByDaysAhead(testList, 365);
+        
+        assertEquals(0, filteredRemind1.size());
+
+        assertEquals(1, filteredRemind5.size());
+        assertEquals("Meta", filteredRemind5.get(0).getCompany());
+
+        assertEquals(1, filteredRemind365.size());
+        assertEquals("Meta", filteredRemind365.get(0).getCompany());
+    }
+
+    @Test
+    public void filterApplicationsByDaysAhead_todayDeadline_included() throws InternTrackException {
+        ArrayList<Application> testList = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate tomorrow = today.plusDays(1);
+        LocalDate yesterday = today.minusDays(1);
+
+        // Add applications with deadlines at various boundaries
+        ApplicationList.addApplication(testList, "c/Google r/Intern d/" + yesterday);
+        ApplicationList.addApplication(testList, "c/Meta r/Engineer d/" + today);
+        ApplicationList.addApplication(testList, "c/Amazon r/PM d/" + tomorrow);
+
+        ArrayList<Application> filtered = ApplicationList.filterApplicationsByDaysAhead(testList, 0);
+
+        // Only today's deadline should be included (yesterday excluded, tomorrow excluded)
+        assertEquals(1, filtered.size());
+        assertEquals(today, filtered.get(0).getDeadline());
+        assertEquals("Meta", filtered.get(0).getCompany());
+    }
 }
