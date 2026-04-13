@@ -406,7 +406,8 @@ public class Parser {
 
         if (trimmedValue.contains("|")) {
             logger.log(Level.WARNING, "Pipe character '|' found in input value: " + trimmedValue);
-            throw new InternTrackException("Input cannot contain the pipe character '|'. Please use a different character.");
+            throw new InternTrackException("Input cannot contain the pipe character '|'. " +
+                    "Please use a different character.");
         }
 
         return trimmedValue;
