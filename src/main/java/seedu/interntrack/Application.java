@@ -209,13 +209,13 @@ public class Application {
     }
 
     /**
-     * Returns text with trimmed whitespace and extra internal spaces removed.
+     * Returns text with all whitespace removed.
      *
      * @param text The text to normalise.
      * @return The normalised text.
      */
     private static String normaliseText(String text) {
-        return text.trim().replaceAll("\\s+", " ");
+        return text.trim().replaceAll("\\s+", "");
     }
 
     /**
