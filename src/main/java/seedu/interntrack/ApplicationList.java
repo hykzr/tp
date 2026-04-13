@@ -145,20 +145,18 @@ public class ApplicationList {
 
     /**
      * Filters applications whose deadlines are on or before the specified date.
-     * Excludes applications with past deadlines (before today).
      *
      * @param userApplications The list to filter.
      * @param deadline         The cutoff date for filtering.
-     * @return A list of applications with deadlines on or after today and on or before the given date.
+     * @return A list of applications with deadlines on or before the given date.
      */
     public static ArrayList<Application> filterApplicationsOnOrBefore(ArrayList<Application> userApplications,
                                                                       LocalDate deadline) {
         ArrayList<Application> filteredApplications = new ArrayList<>();
-        LocalDate today = LocalDate.now();
         for (Application application : userApplications) {
             LocalDate applicationDeadline = application.getDeadline();
             if (!application.isArchived() && applicationDeadline != null 
-                    && applicationDeadline.compareTo(today) >= 0 && !applicationDeadline.isAfter(deadline)) {
+                    && !applicationDeadline.isAfter(deadline)) {
                 filteredApplications.add(application);
             }
         }
@@ -169,16 +167,27 @@ public class ApplicationList {
 
     /**
      * Filters applications with deadlines on or before the specified number of days from today.
-     * Encapsulates the date calculation logic to maintain proper abstraction levels.
+     * Excludes applications with past deadlines (before today) for the remind feature.
+     * Note: numDays is guaranteed to be positive by Parser.parseRemindDays().
      *
      * @param userApplications The list of applications to filter.
-     * @param numDays          The number of days from today to consider as the deadline cutoff.
-     * @return A filtered list of applications with deadlines within the specified range.
+     * @param numDays          The number of days from today to consider as the deadline cutoff (always > 0).
+     * @return A filtered list of applications with deadlines within the specified range and not in the past.
      */
     public static ArrayList<Application> filterApplicationsByDaysAhead(
             ArrayList<Application> userApplications, int numDays) {
-        LocalDate cutoffDate = LocalDate.now().plusDays(numDays);
-        return filterApplicationsOnOrBefore(userApplications, cutoffDate);
+        LocalDate today = LocalDate.now();
+        LocalDate cutoffDate = today.plusDays(numDays);
+        ArrayList<Application> filteredApplications = filterApplicationsOnOrBefore(userApplications, cutoffDate);
+        
+        // Exclude past deadlines for the remind feature
+        ArrayList<Application> futureOnly = new ArrayList<>();
+        for (Application app : filteredApplications) {
+            if (app.getDeadline() != null && app.getDeadline().compareTo(today) >= 0) {
+                futureOnly.add(app);
+            }
+        }
+        return futureOnly;
     }
 
     /**

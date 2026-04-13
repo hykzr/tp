@@ -449,23 +449,6 @@ public class ApplicationListTest {
     }
 
 
-    @Test
-    public void filterApplicationsByDaysAhead_negativeDays_pastDeadlineExcluded() throws InternTrackException {
-        ArrayList<Application> testList = new ArrayList<>();
-        LocalDate today = LocalDate.now();
-        LocalDate yesterday = today.minusDays(1);
-        LocalDate twoDaysAgo = today.minusDays(2);
-
-        ApplicationList.addApplication(testList, "c/Google r/Intern d/" + yesterday);
-        ApplicationList.addApplication(testList, "c/Meta r/Engineer d/" + twoDaysAgo);
-        ApplicationList.addApplication(testList, "c/Amazon r/PM d/" + today);
-
-        ArrayList<Application> filtered = ApplicationList.filterApplicationsByDaysAhead(testList, -2);
-
-        assertEquals(1, filtered.size());
-        assertEquals("Meta", filtered.get(0).getCompany());
-    }
-
 
     @Test
     public void filterApplicationsByDaysAhead_largeNumberOfDays_yearAheadIncluded() throws InternTrackException {
