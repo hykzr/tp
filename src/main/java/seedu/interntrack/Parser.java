@@ -251,7 +251,7 @@ public class Parser {
     /**
      * Parses the application index from a command requiring a 1-based index.
      *
-     * @param input The raw user input string.
+     * @param input       The raw user input string.
      * @param formatError The format error message for the command.
      * @return The parsed 1-based index.
      * @throws InternTrackException If the index is missing or invalid.

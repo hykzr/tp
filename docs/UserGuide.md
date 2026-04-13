@@ -98,6 +98,35 @@ add c/Shopee r/Backend Intern d/2023-11-30 ct/John
 
 Adds an application with a deadline and contact.
 
+### Duplicate Detection
+
+InternTrack automatically detects and prevents duplicate applications from being added. Two applications are considered duplicates based on the following criteria:
+
+**Mandatory Comparison:**
+- **Company** and **Role** must match exactly (comparison is case-insensitive and ignores extra spaces)
+
+**Optional Comparison (only if both applications have values):**
+- **Deadline**: If both applications have non-null deadlines, they must be identical. If one has a deadline and the other doesn't, they are NOT duplicates since different deadlines indicate different hiring cycles or seasons.
+
+**Not Compared:**
+- **Contact**: Contact person is treated as a metadata attribute of an application, not a duplicate criterion. Different recruiters at the same company for the same role represent the same application position, not separate opportunities.
+- **Status**: Status is never checked for duplicates since all new applications automatically start as "Pending"
+
+**Examples of Duplicate Detection:**
+
+| Scenario | First Application | Second Application | Result    |
+|----------|-------------------|-------------------|-----------|
+| **Same company & role, both no deadline** | Google, SWE, no deadline | Google, SWE, no deadline | DUPLICATE |
+| **Same company & role, different deadline** | Google, SWE, 2025-05-01 | Google, SWE, 2025-06-01 | SEPARATE   |
+| **One has deadline, one doesn't** | Google, SWE, 2025-05-01 | Google, SWE, no deadline | SEPARATE  |
+| **Same company & role, different contact** | Google, SWE, contact: John | Google, SWE, contact: Jane | DUPLICATE |
+| **Case and spacing variations** | Google, SWE | GOOGLE, S W E | DUPLICATE |
+
+**Why this logic?**
+
+- Different deadlines represent different hiring cycles, seasons, or batches. Applications to the same company for the same role but with different deadlines are genuinely distinct opportunities. If you wanted to add a deadline to an existing application, use the `edit` command.
+- Contact person variations (different recruiters handling different submissions) do not make them separate applications from the company's perspective. Applicant tracking systems typically treat multiple submissions for the same role as one application record. Thus, contact is stored as a tracked field but not used as a duplicate criterion.
+
 ---
 
 ## 2. List all applications: `list`
@@ -151,7 +180,7 @@ Notes
 - You must provide at least one field to update.
 - Each field can only be supplied once in the same command.
 - The application index must be greater than 0.
-
+- For `s/STATUS`, some default statuses you can think of are `Applied`, `Pending`, `Accepted`, `Rejected` or you custom statuses you set.
 Example
 
 ```
@@ -222,6 +251,7 @@ Notes
 - The command accepts exactly one field per use.
 - Text matching for company, role, contact, and status is case-insensitive.
 - For `d/DEADLINE`, InternTrack shows applications with deadlines on or before the specified date.
+- For `s/STATUS`, some default statuses you can think of are `Applied`, `Pending`, `Accepted`, `Rejected` or you custom statuses you set.
 
 Examples
 

@@ -55,6 +55,10 @@ public class EditDetails {
      * @return Whether this edit payload contains any updates.
      */
     public boolean hasUpdates() {
-        return company != null || role != null || deadline != null || contact != null || status != null;
+        return company != null
+                || role != null
+                || deadline != null
+                || contact != null
+                || status != null;
     }
 }

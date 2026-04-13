@@ -15,6 +15,7 @@ public class SummaryCommand {
     /**
      * Generates and displays a summary including total counts,
      * status breakdowns, and upcoming deadlines.
+     *
      * @param userApplications The current list of applications.
      */
     public static void execute(ArrayList<Application> userApplications) {

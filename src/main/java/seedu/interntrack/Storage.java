@@ -25,6 +25,7 @@ public class Storage {
     private static final int CONTACT_INDEX = 3;
     private static final int STATUS_INDEX = 4;
     private static final int ARCHIVED_INDEX = 5;
+
     /**
      * Loads applications from the local file into the provided list.
      *

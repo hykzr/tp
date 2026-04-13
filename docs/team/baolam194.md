@@ -63,7 +63,12 @@ InternTrack streamlines the internship application chaos. It provides a fast CLI
 - Manage issue trackers by creating the issues at the start of v1.0 and v2.0
 - Review and approve other team members pull request to ensure good standard.
 
+### Contributions to peer reviewing issue
+
+- Manage the issues by filtering and assigning the issues to correct people
+- Squash multiple bugs related to own feature and team implementation.
+
 ### Review/Mentoring Contributions
 
-- PRs reviewed:[#7](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/7), [#11](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/11), [#12](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/12), [#14](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/14), [#15](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/15), [#24](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/24), [#33](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/33), [#42](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/42), [#45](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/45), [#49](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/49), [#50](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/50), [#51](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/51) , [#52](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/52)
+- Pre-Issue PRs reviewed:[#7](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/7), [#11](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/11), [#12](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/12), [#14](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/14), [#15](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/15), [#24](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/24), [#33](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/33), [#42](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/42), [#45](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/45), [#49](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/49), [#50](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/50), [#51](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/51) , [#52](https://github.com/AY2526S2-CS2113-W10-1/tp/pull/52)
 

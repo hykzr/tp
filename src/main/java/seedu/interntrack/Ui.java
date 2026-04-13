@@ -15,6 +15,10 @@ public class Ui {
     private static final String UNKNOWN_COMMAND_MESSAGE = "Unknown command. Please try again.";
 
     private static final Scanner scanner = new Scanner(System.in);
+    private static final String DEFAULT_STATUS1 = "Applied";
+    private static final String DEFAULT_STATUS2 = "Pending";
+    private static final String DEFAULT_STATUS3 = "Accepted";
+    private static final String DEFAULT_STATUS4 = "Rejected";
 
     /**
      * Reads a line of user input from the console.
@@ -80,9 +84,9 @@ public class Ui {
         String role = app.getRole();
         String company = app.getCompany();
         String status = app.getStatus();
-        assert company != null && !company.isEmpty() : "Existing application must have company";
-        assert role != null && !role.isEmpty() : "Existing application must have role";
-        assert status != null : "Existing application must have status";
+        assert company != null && !company.isEmpty() : "Existing application must have company.";
+        assert role != null && !role.isEmpty() : "Existing application must have role.";
+        assert status != null : "Existing application must have status.";
         String deadline = (app.getDeadline() != null) ? " Apply by " + app.getDeadline().toString() + "." : "";
         String contact = (app.getContact() != null) ? " Contact with " + app.getContact() + "." : "";
         String archiveLabel = app.isArchived() ? "[Archived] " : "";
@@ -135,6 +139,7 @@ public class Ui {
         System.out.println("Nice! I've restored application " + index + ":");
         System.out.println("  " + application.toString());
     }
+
     /**
      * Prints applications filtered by the given criterion.
      *
@@ -201,9 +206,17 @@ public class Ui {
      * @param application The updated application.
      * @param index       The index of the application.
      */
-    public static void printEditApplication(Application application, int index) {
+    public static void printEditApplication(Application application, int index, EditDetails editDetails) {
         System.out.println("Nice! I've updated application " + index + ":");
         System.out.println("  " + application.toString());
+        if (editDetails.getStatus() != null
+                && !editDetails.getStatus().equals(DEFAULT_STATUS1)
+                && !editDetails.getStatus().equals(DEFAULT_STATUS2)
+                && !editDetails.getStatus().equals(DEFAULT_STATUS3)
+                && !editDetails.getStatus().equals(DEFAULT_STATUS4)) {
+            System.out.println("Warning: you are using custom " +
+                    "status outside pre-defined status: Applied, Pending, Accepted, Rejected");
+        }
     }
 
     /**

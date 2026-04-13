@@ -12,6 +12,23 @@ public class ApplicationList {
     private static final Logger logger = Logger.getLogger("ApplicationList");
 
     /**
+     * Checks if the given application is a duplicate of any existing application in the list.
+     *
+     * @param userApplications The list of existing applications.
+     * @param newApplication The application to check for duplicates.
+     * @return true if a duplicate exists in the list, false otherwise.
+     */
+    private static boolean isApplicationDuplicate(ArrayList<Application> userApplications,
+                                                  Application newApplication) {
+        for (Application existingApplication : userApplications) {
+            if (newApplication.equals(existingApplication)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Adds a new application parsed from the given input line to the list.
      *
      * @param userApplications The list to add the application to.
@@ -26,6 +43,14 @@ public class ApplicationList {
                 "Application company should be valid after creation";
         assert newApplication.getRole() != null && !newApplication.getRole().isEmpty() :
                 "Application role should be valid after creation";
+
+        // Check if the new application is a duplicate
+        if (isApplicationDuplicate(userApplications, newApplication)) {
+            logger.log(Level.WARNING, "Duplicate application rejected: " + newApplication);
+            throw new InternTrackException(
+                    "This internship application already exists in your list. "
+                            + "Please check your applications before adding a new entry.");
+        }
 
         int sizeBefore = userApplications.size();
         userApplications.add(newApplication);
@@ -68,6 +93,7 @@ public class ApplicationList {
         }
         if (editDetails.getStatus() != null) {
             application.setStatus(editDetails.getStatus());
+
         }
 
         logger.info("Updated application at index " + index + ": " + application);

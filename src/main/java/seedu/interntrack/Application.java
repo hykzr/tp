@@ -177,6 +177,68 @@ public class Application {
         this.isArchived = isArchived;
     }
 
+    /**
+     * Returns true if this application is a duplicate of another application.
+     * Comparisons are based on company and role (case-insensitive) and must
+     * have matching deadlines if they are provided. Contact and status
+     * fields are ignored for duplicate detection.
+     *
+     * @param other The other application to compare with.
+     * @return True if this application is a duplicate of the other; false otherwise.
+     */
+    public boolean equals(Application other) {
+        if (other == null) {
+            return false;
+        }
+
+        boolean isSameCompany = normaliseText(company).equalsIgnoreCase(normaliseText(other.company));
+        boolean isSameRole = normaliseText(role).equalsIgnoreCase(normaliseText(other.role));
+
+        if (!isSameCompany || !isSameRole) {
+            return false;
+        }
+
+        if (!isDeadlineMatch(other)) {
+            return false;
+        }
+
+        assert isSameCompany && isSameRole && isDeadlineMatch(other)
+                : "Duplicate detection postcondition violated";
+
+        return true;
+    }
+
+    /**
+     * Returns text with all whitespace removed.
+     *
+     * @param text The text to normalise.
+     * @return The normalised text.
+     */
+    private static String normaliseText(String text) {
+        return text.trim().replaceAll("\\s+", "");
+    }
+
+    /**
+     * Returns true if the deadlines of two applications match.
+     * Two deadlines match if both are null or both represent the same date.
+     * If only one deadline is null, they do not match.
+     *
+     * @param other The other application to compare with.
+     * @return True if deadlines match, false otherwise.
+     */
+    private boolean isDeadlineMatch(Application other) {
+        // If both are null, they match
+        if (deadline == null && other.deadline == null) {
+            return true;
+        }
+        // If only one is null, they don't match
+        if (deadline == null || other.deadline == null) {
+            return false;
+        }
+        return deadline.equals(other.deadline);
+    }
+
+
     @Override
     public String toString() {
         String archiveLabel = isArchived ? "[Archived] " : "";
