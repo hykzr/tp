@@ -516,9 +516,6 @@ The `hasUpdates()` method acts as a guard against no-op edit commands.
 
 ## Implementation
 
-
-## Application Initialization: Loading Persisted Data
-
 Before any user interaction occurs, the application must load previously saved data from disk. This initialization step
 is critical for demonstrating how the storage mechanism works bidirectionally (save and load).
 
