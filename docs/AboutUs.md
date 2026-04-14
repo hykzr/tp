@@ -6,7 +6,7 @@ Display |  Name  | Github Profile | Portfolio
 
 Display |   Name   |           Github Profile           | Portfolio
 --------|:--------:|:----------------------------------:|:---------:
-![](https://github.com/sionmathew.png?size=100) | Saayuj Ion Mathew | [Github](https://github.com/sionmathew) | [Portfolio](docs/team/sionmathew.md)
+![](https://github.com/sionmathew.png?size=100) | Saayuj Ion Mathew | [Github](https://github.com/sionmathew) | [Portfolio](https://sionmathew.github.io/tp/team/sionmathew.html)
 
 Display |     Name     | Github Profile | Portfolio 
 --------|:------------:|:--------------:|:---------:
